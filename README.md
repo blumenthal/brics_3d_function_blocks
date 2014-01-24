@@ -1,4 +1,4 @@
-Function blocks that can be loaded to the BRICS_3D library
+Function blocks for the BRICS_3D library
 ==========================================================
 
 
@@ -11,7 +11,7 @@ Dependencies
 Here is a summuary on how to install microblx on Ubuntu (12.04)
 
 Dependencies:
-'''
+```
 	sudo apt-get install clang
 
 	wget luajit.org/download/LuaJIT-2.0.2.tar.gz
@@ -21,27 +21,27 @@ Dependencies:
 	sudo make install
 	sudo ln -s /usr/local/bin/luajit /usr/local/bin/lua
 	sudo ldconfig
-'''
+```
 
-The actual microblx library
-'''
+Installation of the actual microblx library:
+```
 	git clone https://github.com/kmarkus/microblx.git
 	git checkout dev # you might want to skip this step
 	cd microblx
 	source env.sh 
 	make
 	echo "export MICROBLX_DIR=$PWD" >> ~/.bashrc
-'''
+```
 
 Compilation
 -----------
 
-'''
+```
  $ mkdir build
  $ cd build 
  $ cmake .. -DCMAKE_CXX_COMPILER=/usr/bin/clang++
  $ make
-'''
+```
 
 Usage
 -----
