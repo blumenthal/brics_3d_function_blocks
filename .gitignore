@@ -1,0 +1,9 @@
+lib
+build
+bin
+.project
+.cproject
+.autotools
+.settings
+.externalToolBuilders
+
