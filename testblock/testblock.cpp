@@ -1,15 +1,27 @@
 /*
- * A demo C++ function block
+ * A demo function block
  */
 
 #define DEBUG 1
+#define BRICS_MICROBLX_ENABLE
 
+/* std includes */
 #include <iostream>
-using namespace std;
-
-#include "ubx.h"
 #include <cstring>
 
+/* microblx includes */
+#include "ubx.h"
+
+/* BRICS_3D includes */
+#include <brics_3d/core/Logger.h>
+#include <brics_3d/worldModel/WorldModel.h>
+#include <brics_3d/worldModel/sceneGraph/DotGraphGenerator.h>
+
+using namespace std;
+using brics_3d::Logger;
+
+brics_3d::WorldModel* wmHandle = 0;
+brics_3d::rsg::DotGraphGenerator* wmPrinter = 0;
 
 /* function block meta-data
  * used by higher level functions.
@@ -41,24 +53,38 @@ ubx_port_t testblock_ports[] = {
 
 static int testblock_init(ubx_block_t *c)
 {
-	cout << "testblock_init: hi from " << c->name << endl;
+	LOG(INFO) << "testblock_init: hi from " << c->name;
+
+	wmHandle = brics_3d::WorldModel::microBlxWmHandle;
+	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
+
 	return 0;
 }
 
 
 static void testblock_cleanup(ubx_block_t *c)
 {
-	cout << "testblock_cleanup: hi from " << c->name << endl;
+	if (wmPrinter != 0) {
+		delete wmPrinter;
+		wmPrinter = 0;
+	}
+
+	LOG(INFO) << "testblock_cleanup: hi from " << c->name;
 }
 
 static int testblock_start(ubx_block_t *c)
 {
-	cout << "testblock_start: hi from " << c->name << endl;
+	LOG(INFO) << "testblock_start: hi from " << c->name;
 	return 0; /* Ok */
 }
 
 static void testblock_step(ubx_block_t *c) {
-	cout << "testblock_step: hi from " << c->name << endl;
+	LOG(INFO) << "testblock_step: hi from " << c->name;
+
+	/* Just print what the world model has to offer. */
+	wmPrinter->reset();
+	wmHandle->scene.executeGraphTraverser(wmPrinter, wmHandle->getRootNodeId());
+	LOG(INFO) << "Current state of the world model: " << std::endl << wmPrinter->getDotGraph();
 }
 
 
@@ -79,13 +105,13 @@ ubx_block_t testblock_comp = {
 
 static int testblock_init(ubx_node_info_t* ni)
 {
-	DBG(" ");
+	LOG(DEBUG) << "testblock_init(ubx_node_info_t* ni)";
 	return ubx_block_register(ni, &testblock_comp);
 }
 
 static void testblock_cleanup(ubx_node_info_t *ni)
 {
-	DBG(" ");
+	LOG(DEBUG) << "testblock_cleanup(ubx_node_info_t *ni)";
 	ubx_block_unregister(ni, "testblock/testblock");
 }
 

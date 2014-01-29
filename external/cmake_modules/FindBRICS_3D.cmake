@@ -11,22 +11,17 @@
 # in case it is not installed in one of the standard paths.
 #
 
-FIND_PATH(BRICS_3D_INCLUDE_DIRS NAMES core/Point3D.h
-  PATHS
-  $ENV{BRICS_3D_DIR}/include/brics3d
-  $ENV{BRICS_3D_DIR}/include/brics_3d
+FIND_PATH(BRICS_3D_INCLUDE_DIRS NAMES brics_3d/core/Point3D.h
+   PATHS
   $ENV{BRICS_3D_DIR}/include
   $ENV{BRICS_3D_DIR}/src
-  $ENV{BRICS_3D_DIR}/src/brics_3d  
-  $ENV{ROBOTPKG_BASE}/include/brics3d
-  $ENV{ROBOTPKG_BASE}/include/brics_3d
+  $ENV{ROBOTPKG_BASE}/include
   ENV CPATH
-  /usr/include/brics3d
-  /usr/local/include/brics3d
-  /opt/local/include/brics3d
-  /usr/include/brics_3d
-  /usr/local/include/brics_3d
-  /opt/local/include/brics_3d
+  /usr/include
+  /usr/local/include
+  /opt/local/include
+  /usr/include
+  /opt/local/include
   NO_DEFAULT_PATH
 )
 
