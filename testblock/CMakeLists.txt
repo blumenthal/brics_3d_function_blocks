@@ -12,8 +12,9 @@ INCLUDE_DIRECTORIES(${MICROBLX_INCLUDE_DIR})
 # add library directories (-L)
 LINK_DIRECTORIES(${BRICS_3D_LINK_DIRECTORIES})
 
-# compile and link the executables 
-ADD_LIBRARY(testblock SHARED testblock.cpp) #-fPIC
+# compile and link the executables
+ADD_LIBRARY(testblock SHARED testblock.cpp) # -fPIC is already included
+SET_TARGET_PROPERTIES(testblock PROPERTIES PREFIX "") # should be testblock.so and not libtestblock.so ... 
 TARGET_LINK_LIBRARIES(testblock ${BRICS_3D_LIBRARIES} ${MICROBLX_LIBRARIES})
 
 
