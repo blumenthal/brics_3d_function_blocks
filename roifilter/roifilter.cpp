@@ -1,3 +1,22 @@
+/******************************************************************************
+* BRICS_3D - 3D Perception and Modeling Library
+* Copyright (c) 2014, KU Leuven
+*
+* Author: Sebastian Blumenthal
+*
+*
+* This software is published under a dual-license: GNU Lesser General Public
+* License LGPL 2.1 and Modified BSD license. The dual-license implies that
+* users of this code may choose which terms they prefer.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Lesser General Public License LGPL and the BSD license for
+* more details.
+*
+******************************************************************************/
+
 /**
  * @file roifilter
  *
@@ -16,6 +35,9 @@
 
 /* microblx includes */
 #include "ubx.h"
+
+/* microblx type for the robot scene graph */
+#include "../types/rsg/types/rsg_types.h"
 
 /* BRICS_3D includes */
 #include <brics_3d/core/Logger.h>
@@ -71,8 +93,8 @@ ubx_config_t roifilter_config[] = {
 };
 
 ubx_port_t roifilter_ports[] = {
-	{ .name="inputDataIds", .attrs=PORT_DIR_IN, .in_type_name="unsigned int" },
-	{ .name="outputDataIds", .attrs=PORT_DIR_OUT, .out_type_name="unsigned int" },
+	{ .name="inputDataIds", .attrs=PORT_DIR_IN, .in_type_name="struct rsg_ids"}, //unsigned int" },
+	{ .name="outputDataIds", .attrs=PORT_DIR_OUT, .out_type_name="struct rsg_ids"},
 	{ NULL },
 };
 
@@ -189,7 +211,7 @@ static void roifilter_step(ubx_block_t *c) {
     LOG(INFO) << "ROIFilter: Computing done with output of " << outputPointCloudContainer->data->getSize() << " points.";
 
 	/* prepare output*/
-    wmHandle->scene.addGeometricNode();
+//    wmHandle->scene.addGeometricNode();
 }
 
 

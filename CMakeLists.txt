@@ -13,7 +13,7 @@ SET(CMAKE_CXX_FLAGS "-Wall -Werror -fvisibility=hidden")
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/bin/ CACHE PATH "Configure the executable output path.")
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/lib/ CACHE PATH "Configure the library output path.")
 
-
+ADD_SUBDIRECTORY(./types/rsg)
 ADD_SUBDIRECTORY(./testblock)
 ADD_SUBDIRECTORY(./roifilter)
 
