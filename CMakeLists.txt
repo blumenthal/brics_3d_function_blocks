@@ -15,5 +15,5 @@ SET(LIBRARY_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/lib/ CACHE PATH "Configure the l
 
 
 ADD_SUBDIRECTORY(./testblock)
-
+ADD_SUBDIRECTORY(./roifilter)
 
