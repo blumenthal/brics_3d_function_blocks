@@ -1,3 +1,3 @@
 struct rsg_uuid {
-	uint8_t data[8];
+	uint8_t data[16];
 };
