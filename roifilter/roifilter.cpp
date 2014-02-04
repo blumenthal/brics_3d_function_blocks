@@ -38,6 +38,7 @@
 
 /* microblx type for the robot scene graph */
 #include "../types/rsg/types/rsg_types.h"
+#include "brics_3d/util/UbxTypecaster.h"
 
 /* BRICS_3D includes */
 #include <brics_3d/core/Logger.h>
@@ -48,6 +49,8 @@
 #include <brics_3d/core/PointCloud3D.h>
 #include <brics_3d/worldModel/sceneGraph/PointCloud.h>
 #include <brics_3d/algorithm/filtering/BoxROIExtractor.h>
+
+
 
 using namespace std;
 using brics_3d::Logger;
@@ -155,32 +158,23 @@ static void roifilter_step(ubx_block_t *c) {
 	LOG(INFO) << "Current state of the world model: " << std::endl << wmPrinter->getDotGraph();
 
 	/* read Id(s) from input port */
-	std::vector<brics_3d::rsg::Id> inputDataIds; // right now there is only one Id
-//	unsigned int inputPointCloudId;
+	std::vector<brics_3d::rsg::Id> inputDataIds;
+	inputDataIds.clear();
+	ubx_port_t* port = ubx_port_get(c, "inputDataIds");
 	rsg_ids recievedInputDataIs;
 	recievedInputDataIs.numberOfIds = 0u;
-	ubx_port_t* port = ubx_port_get(c, "inputDataIds");
-//	int ret = read_uint(port, &inputPointCloudId);
+
 	int ret = read_rsg_ids(port, &recievedInputDataIs);
 	if (ret < 1) {
 		LOG(WARNING) << " ROIFilter: No input IDs given.";
 	}
 
-	inputDataIds.clear();
-	if(recievedInputDataIs.numberOfIds > 0u) {
-		brics_3d::rsg::Id tmpId;
-		brics_3d::rsg::Uuid::iterator i_data = tmpId.begin();
-		for (int i = 0; i < 8; ++i, ++i_data) {
-			*i_data = recievedInputDataIs.ids[0].data[i];
-		}
-		inputDataIds.push_back(tmpId);
-		LOG(INFO) << " ROIFilter: add ing new input Id: " << tmpId;
+	brics_3d::rsg::UbxTypecaster::convertIdsFromUbx(recievedInputDataIs, inputDataIds);
+	if (inputDataIds.size() < 1) {
+		LOG(ERROR) << "ROIFilter: Empty input IDs.";
+		return;
 	}
 
-
-//	inputDataIds.clear();
-//	inputPointCloudId = 41;
-//	inputDataIds.push_back(inputPointCloudId);
 
 	/* prepare input (retrieve a proper point cloud) */
     brics_3d::rsg::Shape::ShapePtr inputShape;
