@@ -45,9 +45,8 @@
 #include <brics_3d/worldModel/WorldModel.h>
 #include <brics_3d/worldModel/sceneGraph/DotGraphGenerator.h>
 
-#include <brics_3d/core/HomogeneousMatrix44.h>
-#include <brics_3d/core/PointCloud3D.h>
-#include <brics_3d/worldModel/sceneGraph/PointCloud.h>
+#include <brics_3d/core/HomogeneousMatrix44.h> // concrete type
+#include <brics_3d/core/PointCloud3D.h>		// concrete type
 #include <brics_3d/algorithm/filtering/BoxROIExtractor.h>
 
 
@@ -105,13 +104,12 @@ ubx_port_t roifilter_ports[] = {
  * ubx_data_t, and call port->[read|write](&data). These introduce
  * some type safety.
  */
-//def_read_fun(read_uint, unsigned int)
-//def_write_fun(write_uint, unsigned int)
 def_read_fun(read_rsg_ids, rsg_ids)
+def_write_fun(write_rsg_ids, rsg_ids)
 
 static int roifilter_init(ubx_block_t *c)
 {
-	LOG(INFO) << "roifilter_init: hi from " << c->name;
+	LOG(INFO) << "ROIFilter: initializing: " << c->name;
 
 	wmHandle = brics_3d::WorldModel::microBlxWmHandle;
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
@@ -140,46 +138,46 @@ static void roifilter_cleanup(ubx_block_t *c)
 		filter = 0;
 	}
 
-	LOG(INFO) << "roifilter_cleanup: hi from " << c->name;
+	LOG(INFO) << "ROIFilter: cleaning up: " << c->name;
 }
 
 static int roifilter_start(ubx_block_t *c)
 {
-	LOG(INFO) << "roifilter_start: hi from " << c->name;
+	LOG(INFO) << "ROIFilter: starting. " << c->name;
 	return 0; /* Ok */
 }
 
 static void roifilter_step(ubx_block_t *c) {
-	LOG(INFO) << "roifilter_step: hi from " << c->name;
+	LOG(INFO) << "ROIFilter: executing: " << c->name;
 
 	/* Just print what the world model has to offer. */
 	wmPrinter->reset();
 	wmHandle->scene.executeGraphTraverser(wmPrinter, wmHandle->getRootNodeId());
-	LOG(INFO) << "Current state of the world model: " << std::endl << wmPrinter->getDotGraph();
+	LOG(DEBUG) << "ROIFilter: Current state of the world model: " << std::endl << wmPrinter->getDotGraph();
 
 	/* read Id(s) from input port */
 	std::vector<brics_3d::rsg::Id> inputDataIds;
 	inputDataIds.clear();
-	ubx_port_t* port = ubx_port_get(c, "inputDataIds");
+	ubx_port_t* inputPort = ubx_port_get(c, "inputDataIds");
 	rsg_ids recievedInputDataIs;
 	recievedInputDataIs.numberOfIds = 0u;
 
-	int ret = read_rsg_ids(port, &recievedInputDataIs);
+	int ret = read_rsg_ids(inputPort, &recievedInputDataIs);
 	if (ret < 1) {
-		LOG(WARNING) << " ROIFilter: No input IDs given.";
+		LOG(WARNING) << "ROIFilter: No input IDs given.";
 	}
 
 	brics_3d::rsg::UbxTypecaster::convertIdsFromUbx(recievedInputDataIs, inputDataIds);
-	if (inputDataIds.size() < 1) {
-		LOG(ERROR) << "ROIFilter: Empty input IDs.";
+	if (inputDataIds.size() < 2) {
+		LOG(ERROR) << "ROIFilter: Not enough IDs specified. Expected 2 but it is: " << inputDataIds.size();
 		return;
 	}
-
+    brics_3d::rsg::Id outputHookId = inputDataIds[0]; // First ID is always the output hook.
 
 	/* prepare input (retrieve a proper point cloud) */
     brics_3d::rsg::Shape::ShapePtr inputShape;
     brics_3d::rsg::TimeStamp inputTime;
-    brics_3d::rsg::Id pointCloudId = inputDataIds[0];
+    brics_3d::rsg::Id pointCloudId = inputDataIds[1];
     wmHandle->scene.getGeometry(pointCloudId, inputShape, inputTime);// retrieve a point cloud
     brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>::PointCloudPtr inputPointCloudContainer(new brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>());
     inputPointCloudContainer = boost::dynamic_pointer_cast<brics_3d::rsg::PointCloud<brics_3d::PointCloud3D> >(inputShape);
@@ -189,11 +187,6 @@ static void roifilter_step(ubx_block_t *c) {
             return;
     }
 
-    vector<brics_3d::rsg::Id> parentIds;
-    wmHandle->scene.getNodeParents(pointCloudId, parentIds);
-    assert(parentIds.size() >= 1);
-    brics_3d::rsg::Id dataParentId = parentIds[0]; // here we take the first, however this ID might be better an input parameter to dissolve disambiguities
-    // should be actually the output hook
 
 	/* get and set config data */
 //	unsigned int clen;
@@ -222,8 +215,34 @@ static void roifilter_step(ubx_block_t *c) {
     filter->filter(inputPointCloudContainer->data.get(), outputPointCloudContainer->data.get());
     LOG(INFO) << "ROIFilter: Computing done with output of " << outputPointCloudContainer->data->getSize() << " points.";
 
-	/* prepare output*/
-//    wmHandle->scene.addGeometricNode();
+	/* prepare output */
+    brics_3d::rsg::Id roiPointCloudId = 21;
+    std::vector<brics_3d::rsg::Attribute> attributes;
+    attributes.clear();
+    attributes.push_back(brics_3d::rsg::Attribute("name","roi_point_cloud"));
+    attributes.push_back(brics_3d::rsg::Attribute("origin","roifilter"));
+	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now(), true);
+
+//	brics_3d::rsg::Box::BoxPtr someBox(new brics_3d::rsg::Box(2, 3, 4));
+//    attributes.clear();
+//    attributes.push_back(brics_3d::rsg::Attribute("name","some_box"));
+//	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, someBox, wmHandle->now(), true);
+
+
+
+	/* store what we did to the world model in the output vector */
+	std::vector<brics_3d::rsg::Id> output;
+	output.clear();
+	output.push_back(outputHookId); // We feed forward the output hook as first ID.
+	output.push_back(roiPointCloudId); // This is what we added.
+
+	/* push output to microblx */
+	ubx_port_t* outputPort = ubx_port_get(c, "outputDataIds");
+	rsg_ids toBeSendOutputDataIs;
+	toBeSendOutputDataIs.numberOfIds = 0u;
+	brics_3d::rsg::UbxTypecaster::convertIdsToUbx(output, toBeSendOutputDataIs);
+	write_rsg_ids(outputPort, &toBeSendOutputDataIs);
+
 }
 
 
