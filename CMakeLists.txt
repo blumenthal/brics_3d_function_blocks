@@ -16,4 +16,5 @@ SET(LIBRARY_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/lib/ CACHE PATH "Configure the l
 ADD_SUBDIRECTORY(./types/rsg)
 ADD_SUBDIRECTORY(./testblock)
 ADD_SUBDIRECTORY(./roifilter)
+ADD_SUBDIRECTORY(./octreefilter)
 
