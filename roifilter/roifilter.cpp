@@ -191,9 +191,9 @@ static void roifilter_step(ubx_block_t *c) {
 	/* get and set config data */
 //	unsigned int clen;
 	min_x = -0.5;// *((double*) ubx_config_get_data_ptr(c, "min_x", &clen));
-	max_x = 0.5;//*((double*) ubx_config_get_data_ptr(c, "max_x", &clen));
+	max_x = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_x", &clen));
 	min_y = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_y", &clen));
-	max_y = 0.5;//*((double*) ubx_config_get_data_ptr(c, "max_y", &clen));
+	max_y = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_y", &clen));
 	min_z = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_z", &clen));
 	max_z = 0.5;//*((double*) ubx_config_get_data_ptr(c, "max_z", &clen));
 
@@ -221,7 +221,7 @@ static void roifilter_step(ubx_block_t *c) {
     attributes.clear();
     attributes.push_back(brics_3d::rsg::Attribute("name","roi_point_cloud"));
     attributes.push_back(brics_3d::rsg::Attribute("origin","roifilter"));
-	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now(), true);
+	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now());
 
 //	brics_3d::rsg::Box::BoxPtr someBox(new brics_3d::rsg::Box(2, 3, 4));
 //    attributes.clear();

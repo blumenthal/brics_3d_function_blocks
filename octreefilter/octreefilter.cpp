@@ -177,7 +177,7 @@ static void octreefilter_step(ubx_block_t *c) {
 
 	/* get and set config data */
 //	unsigned int clen;
-    octreeCellSize = 0.1;// *((double*) ubx_config_get_data_ptr(c, "octreeCellSize", &clen));
+    octreeCellSize = 0.01;// *((double*) ubx_config_get_data_ptr(c, "octreeCellSize", &clen));
     filter->setVoxelSize(octreeCellSize);
 
     /* define where to store results */
@@ -195,9 +195,9 @@ static void octreefilter_step(ubx_block_t *c) {
     brics_3d::rsg::Id roiPointCloudId = 21;
     std::vector<brics_3d::rsg::Attribute> attributes;
     attributes.clear();
-    attributes.push_back(brics_3d::rsg::Attribute("name","roi_point_cloud"));
+    attributes.push_back(brics_3d::rsg::Attribute("name","subsampled_point_cloud"));
     attributes.push_back(brics_3d::rsg::Attribute("origin","octreefilter"));
-	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now(), true);
+	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now());
 
 //	brics_3d::rsg::Box::BoxPtr someBox(new brics_3d::rsg::Box(2, 3, 4));
 //    attributes.clear();
