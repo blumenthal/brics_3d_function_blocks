@@ -21,6 +21,34 @@ ubx.load_module(ni, fbx_path .. "lib/octreefilter.so")
 
 ubx.ffi_load_types(ni)
 
+-- wm handle
+world_model = ffi.load(fbx_path .. "lib/world_model.so")
+ 
+ffi.cdef[[
+typedef struct WorldModel WorldModel;
+typedef struct rsg_wm_handle rsg_wm_handle;
+ 
+WorldModel *WorldModel_WorldModel();
+void WorldModel__gc(WorldModel *);
+
+rsg_wm_handle WorldModel_getHandle(WorldModel *);
+]]
+
+
+local mt = {}
+mt.__index = mt
+function mt.getHandle(self, ...)
+	return world_model.WorldModel_getHandle(self.super, ...)
+end
+ 
+function WorldModel(...)
+	local self = {super = world_model.WorldModel_WorldModel(...)}
+	ffi.gc(self.super, world_model.WorldModel__gc)
+return setmetatable(self, mt)
+end
+
+myWm = WorldModel()
+
 -- web interface for introspeciton
 print("creating instance of 'webif/webif'")
 webif1=ubx.block_create(ni, "webif/webif", "webif1", { port="8888" })
