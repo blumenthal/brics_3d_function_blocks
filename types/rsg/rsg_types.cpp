@@ -23,6 +23,9 @@
 
 //#define MAX_NUMBER_OF_IDS 64 //Well this is really an arbitrary choice...
 
+/* BRICS_3D includes */
+//#include <brics_3d/worldModel/WorldModel.h>
+
 /* include types */
 #include "types/rsg_uuid.h"
 #include "types/rsg_uuid.h.hexarr"
@@ -30,12 +33,17 @@
 #include "types/rsg_ids.h"
 #include "types/rsg_ids.h.hexarr"
 
+#include "types/rsg_wm_handle.h"
+#include "types/rsg_wm_handle.h.hexarr"
+
 /* declare types */
 ubx_type_t rsg_types[] = {
 
 	/* declare rsg types */
 	def_struct_type(struct rsg_uuid, &rsg_uuid_h),
 	def_struct_type(struct rsg_ids, &rsg_ids_h),
+
+	def_struct_type(struct rsg_wm_handle, &rsg_wm_handle_h),
 
 	{ NULL },
 };

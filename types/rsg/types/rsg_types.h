@@ -6,5 +6,6 @@
 
 #include "rsg_uuid.h"
 #include "rsg_ids.h"
+#include "rsg_wm_handle.h"
 
 #endif /* RSG_TYPES_H_ */
