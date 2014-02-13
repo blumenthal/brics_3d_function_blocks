@@ -18,9 +18,15 @@
  ******************************************************************************/
 
 #include "WorldModelLuaBinding.h"
+#include <stdio.h>
 
 extern "C" {
 WorldModel* WorldModel_WorldModel() {
+	printf("WorldModel_WorldModel\n");
+
+	/* Configure logger - default level won't tell us much */
+	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+
 	return new WorldModel();
 }
 

@@ -28,7 +28,7 @@ ffi.cdef[[
 typedef struct WorldModel WorldModel;
 typedef struct rsg_wm_handle rsg_wm_handle;
  
-WorldModel *WorldModel_WorldModel();
+WorldModel* WorldModel_WorldModel();
 void WorldModel__gc(WorldModel *);
 
 rsg_wm_handle WorldModel_getHandle(WorldModel *);
@@ -42,7 +42,7 @@ function mt.getHandle(self, ...)
 end
  
 function WorldModel(...)
-	local self = {super = world_model.WorldModel_WorldModel(...)}
+	local self = {super = world_model.WorldModel_WorldModel()}
 	ffi.gc(self.super, world_model.WorldModel__gc)
 return setmetatable(self, mt)
 end

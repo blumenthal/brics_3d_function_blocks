@@ -13,14 +13,16 @@ INCLUDE_DIRECTORIES(${MICROBLX_INCLUDE_DIR})
 #INCLUDE_DIRECTORIES(${EIGEN_INCLUDE_DIR})
 
 # add library directories (-L)
-#LINK_DIRECTORIES(${BRICS_3D_LINK_DIRECTORIES})
+LINK_DIRECTORIES(${BRICS_3D_LINK_DIRECTORIES})
 
 # compile and link the executables
 ADD_LIBRARY(rsg_types SHARED rsg_types)
 SET_TARGET_PROPERTIES(rsg_types PROPERTIES PREFIX "") 
 TARGET_LINK_LIBRARIES(rsg_types ${MICROBLX_LIBRARIES})
 
+#-fvisibility=hidden will pervent symbols to be found via lua ffi :-(
+SET(CMAKE_CXX_FLAGS "-Wall -Werror")# -fvisibility=hidden")
 ADD_LIBRARY(world_model SHARED WorldModelLuaBinding)
 SET_TARGET_PROPERTIES(world_model PROPERTIES PREFIX "") 
-TARGET_LINK_LIBRARIES(world_model ${MICROBLX_LIBRARIES})
+TARGET_LINK_LIBRARIES(world_model ${BRICS_3D_LIBRARIES})
 
