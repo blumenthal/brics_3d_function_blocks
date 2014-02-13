@@ -18,25 +18,29 @@
  ******************************************************************************/
 
 #include "WorldModelLuaBinding.h"
-#include <stdio.h>
 
 extern "C" {
-WorldModel* WorldModel_WorldModel() {
-	printf("WorldModel_WorldModel\n");
 
-	/* Configure logger - default level won't tell us much */
+/* Wrapped constructor */
+WorldModel* WorldModel_WorldModel() {
+
+	/* Configure the logger - default level won't tell us much */
 	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
 
 	return new WorldModel();
 }
 
+/* Wrapped destuctor */
 void WorldModel__gc(WorldModel *this_) {
 	delete this_;
 }
 
-rsg_wm_handle WorldModel_getHandle(WorldModel *this_) {
-	rsg_wm_handle tmpHandle; //scope?
-	tmpHandle.wm = reinterpret_cast<void*>(this_);
+/* Helper function to get a handle of to be used for the configure functions of
+ * a micro block
+ */
+rsg_wm_handle* WorldModel_getHandle(WorldModel *this_) {
+	rsg_wm_handle* tmpHandle = new rsg_wm_handle; //scope?
+	tmpHandle->wm = reinterpret_cast<void*>(this_);
 	return tmpHandle;
 }
 

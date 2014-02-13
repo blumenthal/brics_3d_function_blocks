@@ -31,10 +31,10 @@ typedef struct rsg_wm_handle rsg_wm_handle;
 WorldModel* WorldModel_WorldModel();
 void WorldModel__gc(WorldModel *);
 
-rsg_wm_handle WorldModel_getHandle(WorldModel *);
+rsg_wm_handle* WorldModel_getHandle(WorldModel *);
 ]]
 
-
+-- mimic the brics_3d::WordlModel with a lua version of that class
 local mt = {}
 mt.__index = mt
 function mt.getHandle(self, ...)
@@ -42,12 +42,15 @@ function mt.getHandle(self, ...)
 end
  
 function WorldModel(...)
-	local self = {super = world_model.WorldModel_WorldModel()}
+	local self = {super = world_model.WorldModel_WorldModel(...)}
 	ffi.gc(self.super, world_model.WorldModel__gc)
 return setmetatable(self, mt)
 end
 
 myWm = WorldModel()
+rsg_wm_handle = myWm:getHandle()
+print(myWm)
+print(myWm:getHandle().wm)
 
 -- web interface for introspeciton
 print("creating instance of 'webif/webif'")
@@ -58,7 +61,7 @@ print("running webif start", ubx.block_start(webif1))
 
 -- create fucnction blocks
 print("creating instance of 'roifilter/roifilter'")
-roifilter1=ubx.block_create(ni, "roifilter/roifilter", "roifilter1", { max_x="2"})
+roifilter1=ubx.block_create(ni, "roifilter/roifilter", "roifilter1", { wm_handle={wm = myWm:getHandle().wm}, max_x="2"}) 
 
 ubx.block_init(roifilter1)
 ubx.block_start(roifilter1)

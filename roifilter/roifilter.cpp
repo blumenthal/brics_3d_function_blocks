@@ -111,6 +111,7 @@ def_write_fun(write_rsg_ids, rsg_ids)
 static int roifilter_init(ubx_block_t *c)
 {
 	LOG(INFO) << "ROIFilter: initializing: " << c->name;
+	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
 
 	//wmHandle = brics_3d::WorldModel::microBlxWmHandle;
 	unsigned int clen;
