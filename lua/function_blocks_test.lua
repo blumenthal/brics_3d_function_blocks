@@ -18,6 +18,7 @@ ubx.load_module(ni, ubx_path .. "std_blocks/ptrig/ptrig.so")
 ubx.load_module(ni, fbx_path .. "lib/rsg_types.so")
 ubx.load_module(ni, fbx_path .. "lib/roifilter.so")
 ubx.load_module(ni, fbx_path .. "lib/octreefilter.so")
+ubx.load_module(ni, fbx_path .. "lib/pointcloudloader.so")
 
 ubx.ffi_load_types(ni)
 
@@ -62,26 +63,46 @@ print("running webif start", ubx.block_start(webif1))
 -- create function blocks
 print("creating instance of 'roifilter/roifilter'")
 roifilter1=ubx.block_create(ni, "roifilter/roifilter", "roifilter1", { wm_handle={wm = myWm:getHandle().wm}, max_x="2"}) 
-
 ubx.block_init(roifilter1)
 ubx.block_start(roifilter1)
 
+print("creating instance of 'pointcloudloader/pointcloudloader'")
+pointcloudloader1=ubx.block_create(ni, "pointcloudloader/pointcloudloader", "pointcloudloader1", { wm_handle={wm = myWm:getHandle().wm}}) 
+ubx.block_init(pointcloudloader1)
+ubx.block_start(pointcloudloader1)
 
 -- a default tigger to fire the function blocks
 print("creating instance of 'std_triggers/ptrig'")
 ptrig1=ubx.block_create(ni, "std_triggers/ptrig", "ptrig1",
 			{
-			   period = {sec=0, usec=100000 },
+			   period = {sec=1, usec=000000 },
 			   sched_policy="SCHED_OTHER", sched_priority=0,
-			   trig_blocks={ { b=roifilter1, num_steps=1, measure=0 }
+			   trig_blocks={ 
+			   		{ b=pointcloudloader1, num_steps=1, measure=0 },
+			    	{ b=roifilter1, num_steps=1, measure=0 }		   				
 			   } } )
 print("running ptrig1 init", ubx.block_init(ptrig1))
+
+-- connections
+--ubx.conn_uni(pointcloudloader1, "outputDataIds", roifilter1, "inputDataIds", iblock_type, iblock_config, dont_start)
+--assert(ubx.conn_lfds_cyclic(pointcloudloader1, "outputDataIds", roifilter1, "inputDataIds"))
+
+print("creating instance of 'lfds_buffers/cyclic'")
+fifo1=ubx.block_create(ni, "lfds_buffers/cyclic", "fifo1", {buffer_len=4, type_name="struct rsg_ids"})
+ubx.block_init(fifo1)
+ubx.block_start(fifo1)
+
+pointcloud1out=ubx.port_get(pointcloudloader1, "outputDataIds")
+roifilter1in=ubx.port_get(roifilter1, "inputDataIds")
+
+ubx.port_connect_out(pointcloud1out, fifo1)
+ubx.port_connect_in(roifilter1in, fifo1)
 
 -- start!
 --roifilter1.step()
 --local roifilter1Table = ubx.block_totab(roifilter1)
 --roifilter1Table.step()
---print("running ptrig1 init", ubx.block_start(ptrig1))
+print("running ptrig1 init", ubx.block_start(ptrig1))
 
 
 -- wait for user input for exit

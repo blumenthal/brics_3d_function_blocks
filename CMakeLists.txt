@@ -17,4 +17,4 @@ ADD_SUBDIRECTORY(./types/rsg)
 ADD_SUBDIRECTORY(./testblock)
 ADD_SUBDIRECTORY(./roifilter)
 ADD_SUBDIRECTORY(./octreefilter)
-
+ADD_SUBDIRECTORY(./pointcloudloader)
