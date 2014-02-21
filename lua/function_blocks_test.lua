@@ -2,6 +2,7 @@
 
 ffi = require("ffi")
 ubx = require("ubx")
+rsg = require("rsg")
 
 ni=ubx.node_create("function_block_node") -- create a new handle that holds all function blocks
 
@@ -20,35 +21,9 @@ ubx.load_module(ni, fbx_path .. "lib/roifilter.so")
 ubx.load_module(ni, fbx_path .. "lib/octreefilter.so")
 ubx.load_module(ni, fbx_path .. "lib/pointcloudloader.so")
 
-ubx.ffi_load_types(ni)
 
--- wm handle
-world_model = ffi.load(fbx_path .. "lib/world_model.so")
- 
-ffi.cdef[[
-typedef struct WorldModel WorldModel;
-typedef struct rsg_wm_handle rsg_wm_handle;
- 
-WorldModel* WorldModel_WorldModel();
-void WorldModel__gc(WorldModel *);
 
-rsg_wm_handle* WorldModel_getHandle(WorldModel *);
-]]
-
--- mimic the brics_3d::WordlModel with a lua version of that class
-local mt = {}
-mt.__index = mt
-function mt.getHandle(self, ...)
-	return world_model.WorldModel_getHandle(self.super, ...)
-end
- 
-function WorldModel(...)
-	local self = {super = world_model.WorldModel_WorldModel(...)}
-	ffi.gc(self.super, world_model.WorldModel__gc)
-return setmetatable(self, mt)
-end
-
-myWm = WorldModel()
+myWm = rsg.WorldModel()
 rsg_wm_handle = myWm:getHandle()
 print(myWm)
 print(myWm:getHandle().wm)
@@ -84,7 +59,6 @@ ptrig1=ubx.block_create(ni, "std_triggers/ptrig", "ptrig1",
 print("running ptrig1 init", ubx.block_init(ptrig1))
 
 -- connections
---ubx.conn_uni(pointcloudloader1, "outputDataIds", roifilter1, "inputDataIds", iblock_type, iblock_config, dont_start)
 --assert(ubx.conn_lfds_cyclic(pointcloudloader1, "outputDataIds", roifilter1, "inputDataIds"))
 
 print("creating instance of 'lfds_buffers/cyclic'")
