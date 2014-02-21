@@ -5,8 +5,8 @@ ubx = require("ubx")
 
 ni=ubx.node_create("function_block_node") -- create a new handle that holds all function blocks
 
-ubx_path = "/opt/src/sandbox/microblx/microblx/" -- FIXME: ${MICROBLX_DIR}
-fbx_path = "/opt/src/sandbox/brics_3d_function_blocks/" -- FIXME
+ubx_path = os.getenv("MICROBLX_DIR") .. "/" -- NOTE: this requires the MICROBLX_DIR environemtn variable to be set
+fbx_path = os.getenv("BRICS_3D_FUNCTION_BLOCKS_DIR") .. "/"  -- NOTE: this requires the BRICS_3D_FUNCTION_BLOCKS_DIR environemtn variable to be set (typically done in env.sh)
 
 -- std ubx modules
 ubx.load_module(ni, ubx_path .. "std_types/stdtypes/stdtypes.so")
@@ -59,7 +59,7 @@ print("running webif init", ubx.block_init(webif1))
 print("running webif start", ubx.block_start(webif1))
 
 
--- create fucnction blocks
+-- create function blocks
 print("creating instance of 'roifilter/roifilter'")
 roifilter1=ubx.block_create(ni, "roifilter/roifilter", "roifilter1", { wm_handle={wm = myWm:getHandle().wm}, max_x="2"}) 
 
@@ -79,7 +79,9 @@ print("running ptrig1 init", ubx.block_init(ptrig1))
 
 -- start!
 --roifilter1.step()
-print("running ptrig1 init", ubx.block_start(ptrig1))
+--local roifilter1Table = ubx.block_totab(roifilter1)
+--roifilter1Table.step()
+--print("running ptrig1 init", ubx.block_start(ptrig1))
 
 
 -- wait for user input for exit
