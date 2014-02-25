@@ -36,10 +36,9 @@ return bd.system
    },
 
    configurations = {
-      { name="pointcloudloader_1", config =  { wm_handle={wm = myWm:getHandle().wm}} },
-      { name="roifilter_1", config = { wm_handle={wm = myWm:getHandle().wm}, max_x="2" },
-      { name="ptrig1", config = { period = {sec=1, usec=000000 }, trig_blocks={
-										{ b="#pointcloudloader_1", num_steps=1, measure=0 },
-										{ b="#roifilter_1", num_steps=1, measure=0 } } } }}
+      { name="pointcloudloader_1", config =  { wm_handle={wm = myWm:getHandle().wm} } },
+      { name="roifilter_1", config = { wm_handle={wm = myWm:getHandle().wm}, max_x="2"} },
+      { name="ptrig1", config = { period = {sec=1, usec=000000 }, trig_blocks={ { b="#pointcloudloader_1", num_steps=1, measure=0 },
+										{ b="#roifilter_1", num_steps=1, measure=0 } } } }
    },
 }
