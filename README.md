@@ -46,7 +46,16 @@ Compilation
 Usage
 -----
 
-TBD
+To start the example do the following:
+
+```
+source env.sh
+sh start_demo.sh 
+```
+
+The system will be _initialize_. To actually _start_ it got to the web interface at 
+localhost:8888 and click on all dark green _start_ buttons.
+
 
 Licensing
 ---------
@@ -61,7 +70,7 @@ Impressum
 ---------
 
 Written by Sebastian Blumenthal (blumenthal@locomotec.com)
-Last update: 24.01.2014
+Last update: 26.02.2014
  
 
 
