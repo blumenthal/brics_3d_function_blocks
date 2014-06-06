@@ -47,6 +47,14 @@
 #include <brics_3d/core/HomogeneousMatrix44.h> // concrete type
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
 
+#ifdef ENABLE_OSG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
+    // Member declaration raising the warning.
+#include <brics_3d/worldModel/sceneGraph/OSGVisualizer.h>
+#pragma clang diagnostic pop
+#endif
+
 
 
 using namespace std;
@@ -109,6 +117,16 @@ static int pointcloudloader_init(ubx_block_t *c)
 		LOG(FATAL) << "PointCloudLoader: World model handle could not be initialized.";
 		return -1;
 	}
+
+#ifdef ENABLE_OSG
+	brics_3d::rsg::OSGVisualizer* geometryVizualizer = new brics_3d::rsg::OSGVisualizer(); // Create the visualizer.
+	brics_3d::rsg::VisualizationConfiguration osgConfiguration; // _Optional_ configuration file.
+	osgConfiguration.visualizeAttributes = true; // Vizualize attributes of a node iff true.
+	osgConfiguration.visualizeIds = true;        // Vizualize Ids of a node iff true.
+	osgConfiguration.abbreviateIds = true;       // Vizualize only the lower 2 bytes of an Id iff true.
+	geometryVizualizer->setConfig(osgConfiguration);
+	wmHandle->scene.attachUpdateObserver(geometryVizualizer); // Enable 3D visualization
+#endif
 
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
 

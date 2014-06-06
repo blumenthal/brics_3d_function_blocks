@@ -53,7 +53,7 @@ source env.sh
 sh start_demo.sh 
 ```
 
-The system will be _initialize_. To actually _start_ it got to the web interface at 
+The system will be _initialize_. To actually _start_ it go to the web interface at 
 localhost:8888 and click on all dark green _start_ buttons.
 
 
