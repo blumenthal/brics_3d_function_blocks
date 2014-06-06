@@ -1,6 +1,34 @@
 Function blocks for the BRICS_3D library
 ==========================================================
 
+Overview
+--------
+
+A `function block` is a computational entity that performs an arbitrary
+computation on the data stored in a world model based on the
+`Robot Scene Graph (RSG)`. It consumes and produces scene graph
+elements. Algorithms for estimating near future states are
+one example of such a computation. A function block can
+be loaded as a plugin to the RSG and is executed
+on demand. This allows to move the computation near to
+the data to improve efficiency of the executed computations.
+
+ ![ubx_function_block.png](doc/figs/ubx_function_block.png)
+
+* All element in the RSG are uniquley adressable via thier IDs. 
+  These IDs serve as input and output for a function block. 
+  The ports called `inputDataIds` and `outputDataIds` are used to transfere 
+  this information.
+  
+  Multibple function blocks can be chained up if the output port of one block is connected with
+  the input port of another function block. This allows to create processing chains by combining 
+  individual of function blocks.
+   
+* To obtain access to the data of the handle of world model is passes as 
+ configuration parameter `wm_handle`. This handle is not supposed to change during runtime.   
+
+
+
 
 Dependencies
 ------------
@@ -30,7 +58,7 @@ Installation of the actual microblx library:
 	cd microblx
 	source env.sh 
 	make
-	echo "export MICROBLX_DIR=$PWD" >> ~/.bashrc
+	echo "export UBX_ROOT=$PWD" >> ~/.bashrc
 ```
 
 Compilation
@@ -49,11 +77,10 @@ Usage
 To start the example do the following:
 
 ```
-source env.sh
 sh start_demo.sh 
 ```
 
-The system will be _initialize_. To actually _start_ it go to the web interface at 
+The system will be _initialized_. To actually _start_ it go to the web interface at 
 localhost:8888 and click on all dark green _start_ buttons.
 
 
@@ -70,7 +97,7 @@ Impressum
 ---------
 
 Written by Sebastian Blumenthal (blumenthal@locomotec.com)
-Last update: 26.02.2014
+Last update: 06.06.2014
  
 
 
