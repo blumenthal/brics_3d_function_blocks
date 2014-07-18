@@ -47,7 +47,19 @@
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
 #include <brics_3d/algorithm/filtering/Octree.h>
 
+/* Helper maccros to support parametrized builds for this octreefilter */
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define NAME_WITH_PARAM(param) "octreefilter"VALUE(param)"/octreefilter"VALUE(param)
 
+#ifdef DEFAULT_VOXEL_SIZE
+	#define FILTER_NAME NAME_WITH_PARAM(DEFAULT_VOXEL_SIZE)
+#else // Default  for non-pramatrized build
+	#define DEFAULT_VOXEL_SIZE 0.01
+	#define FILTER_NAME "octreefilter/octreefilter"
+#endif
+
+#pragma message(FILTER_NAME)
 
 using namespace std;
 using brics_3d::Logger;
@@ -187,7 +199,7 @@ static void octreefilter_step(ubx_block_t *c) {
 
 	/* get and set config data */
 //	unsigned int clen;
-    octreeCellSize = 0.01;// *((double*) ubx_config_get_data_ptr(c, "octreeCellSize", &clen));
+    octreeCellSize = DEFAULT_VOXEL_SIZE;// *((double*) ubx_config_get_data_ptr(c, "octreeCellSize", &clen));
     filter->setVoxelSize(octreeCellSize);
 
     /* define where to store results */
@@ -234,7 +246,8 @@ static void octreefilter_step(ubx_block_t *c) {
 
 /* put everything together */
 ubx_block_t octreefilter_comp = {
-	.name = "octreefilter/octreefilter",
+	//.name = "octreefilter/octreefilter",
+	.name = FILTER_NAME ,
 	.type = BLOCK_TYPE_COMPUTATION,
 	.meta_data = octreefilter_meta,
 	.configs = octreefilter_config,

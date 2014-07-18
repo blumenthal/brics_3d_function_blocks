@@ -13,9 +13,11 @@ be loaded as a plugin to the RSG and is executed
 on demand. This allows to move the computation near to
 the data to improve efficiency of the executed computations.
 
+The current implementation of the RSG is part of the BRICS_3D library.
+
  ![ubx_function_block.png](doc/figs/ubx_function_block.png)
 
-* All element in the RSG are uniquley adressable via thier IDs. 
+* All elements in the RSG are uniquley adressable via thier IDs. 
   These IDs serve as input and output for a function block. 
   The ports called `inputDataIds` and `outputDataIds` are used to transfere 
   this information.
