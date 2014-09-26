@@ -56,8 +56,8 @@ Dependencies:
 Installation of the actual microblx library:
 ```
 	git clone https://github.com/kmarkus/microblx.git
-	git checkout dev # you might want to skip this step
 	cd microblx
+	git checkout dev # you might want to skip this step
 	source env.sh 
 	make
 	echo "export UBX_ROOT=$PWD" >> ~/.bashrc
