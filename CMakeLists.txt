@@ -13,8 +13,15 @@ SET(CMAKE_CXX_FLAGS "-Wall -Werror -fvisibility=hidden")
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/bin/ CACHE PATH "Configure the executable output path.")
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/lib/ CACHE PATH "Configure the library output path.")
 
+OPTION(USE_OSG "Enable Open Scene Graph" OFF) #there are still some issues with the clang compiler
+OPTION(USE_FBX "Enable Function Blocks" ON) # to avoid be abele to break cyclic dependencies.
+
 ADD_SUBDIRECTORY(./types/rsg)
-ADD_SUBDIRECTORY(./testblock)
-ADD_SUBDIRECTORY(./roifilter)
-ADD_SUBDIRECTORY(./octreefilter)
-ADD_SUBDIRECTORY(./pointcloudloader)
+IF(USE_FBX)
+    ADD_SUBDIRECTORY(./testblock)
+    ADD_SUBDIRECTORY(./roifilter)
+    ADD_SUBDIRECTORY(./octreefilter)
+    IF(USE_OSG)
+        ADD_SUBDIRECTORY(./pointcloudloader)
+    ENDIF(USE_OSG)
+ENDIF(USE_FBX)
