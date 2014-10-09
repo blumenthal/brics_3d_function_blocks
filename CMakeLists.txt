@@ -14,7 +14,7 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/bin/ CACHE PATH "Configure th
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/lib/ CACHE PATH "Configure the library output path.")
 
 OPTION(USE_OSG "Enable Open Scene Graph" OFF) #there are still some issues with the clang compiler
-OPTION(USE_FBX "Enable Function Blocks" ON) # to avoid be abele to break cyclic dependencies.
+OPTION(USE_FBX "Enable Function Blocks" OFF) # to avoid be abele to break cyclic dependencies.
 
 ADD_SUBDIRECTORY(./types/rsg)
 IF(USE_FBX)

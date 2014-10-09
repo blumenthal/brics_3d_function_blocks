@@ -6,13 +6,13 @@
 #  MICROBLX_LINK_DIRECTORIES - the MICROBLX linker directories (-L)
 #  MICROBLX_LIBRARIES - MICROBLX libraries
 #
-# You can set an environment variable "MICROBLX_DIR" to help CMake to find the MICROBLX library,
+# You can set an environment variable "UBX_ROOT" to help CMake to find the MICROBLX library,
 # in case it is not installed in one of the standard paths.
 #
 
 FIND_PATH(MICROBLX_INCLUDE_DIR NAMES ubx.h
   PATHS
-  $ENV{MICROBLX_DIR}/src
+  $ENV{UBX_ROOT}/src
   ENV CPATH
   /usr/include/
   /usr/local/include/
@@ -21,8 +21,8 @@ FIND_PATH(MICROBLX_INCLUDE_DIR NAMES ubx.h
 
 FIND_LIBRARY(MICROBLX_LIBRARY NAMES "ubx" 
   PATHS
-  $ENV{MICROBLX_DIR}/src
-  $ENV{MICROBLX_DIR}/lib 
+  $ENV{UBX_ROOT}/src
+  $ENV{UBX_ROOT}/lib 
   ENV LD_LIBRARY_PATH
   ENV LIBRARY_PATH
   /usr/lib

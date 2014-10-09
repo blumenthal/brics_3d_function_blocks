@@ -49,7 +49,6 @@ Dependencies:
 	cd LuaJIT-2.0.2
 	make
 	sudo make install
-	sudo ln -s /usr/local/bin/luajit /usr/local/bin/lua
 	sudo ldconfig
 ```
 
