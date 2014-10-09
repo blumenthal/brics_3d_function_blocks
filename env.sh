@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source ${MICROBLX_DIR}/env.sh
+source ${UBX_ROOT}/env.sh
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -13,4 +13,4 @@ fi
 FBX_LUA_PATH="$DIR/lua/?.lua"
 
 export LUA_PATH="$FBX_LUA_PATH;$LUA_PATH"
-export BRICS_3D_FUNCTION_BLOCKS_DIR="$DIR"
+

@@ -22,8 +22,8 @@ local M={}
 local ffi = require("ffi")
 local ubx = require("ubx")
 
-local ubx_path = os.getenv("MICROBLX_DIR") .. "/" -- NOTE: this requires the MICROBLX_DIR environemtn variable to be set
-local fbx_path = os.getenv("BRICS_3D_FUNCTION_BLOCKS_DIR") .. "/"  -- NOTE: this requires the BRICS_3D_FUNCTION_BLOCKS_DIR environemtn variable to be set (typically done in env.sh)
+local ubx_path = os.getenv("UBX_ROOT") .. "/" -- NOTE: this requires the MICROBLX_DIR environemtn variable to be set
+local fbx_path = os.getenv("FBX_MODULES") .. "/"  -- NOTE: this requires the BRICS_3D_FUNCTION_BLOCKS_DIR environemtn variable to be set (typically done in env.sh)
 
 local ni=ubx.node_create("world_model_node_tmp")  -- better: load and parse ffi without ubx
 ubx.load_module(ni, fbx_path .. "lib/rsg_types.so")
