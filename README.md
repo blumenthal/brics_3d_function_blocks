@@ -70,7 +70,12 @@ Compilation
  $ cd build 
  $ cmake .. -DCMAKE_CXX_COMPILER=/usr/bin/clang++
  $ make 
+ $ cd ..
+ $ echo "export FBX_MODULES=$PWD" >> ~/.bashrc
 ```
+
+
+
 
 Usage
 -----
