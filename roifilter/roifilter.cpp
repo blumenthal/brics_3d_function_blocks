@@ -49,7 +49,7 @@
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
 #include <brics_3d/algorithm/filtering/BoxROIExtractor.h>
 
-
+UBX_MODULE_LICENSE_SPDX(BSD-3-Clause)
 
 using namespace std;
 using brics_3d::Logger;

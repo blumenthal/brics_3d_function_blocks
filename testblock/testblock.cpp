@@ -17,6 +17,8 @@
 #include <brics_3d/worldModel/WorldModel.h>
 #include <brics_3d/worldModel/sceneGraph/DotGraphGenerator.h>
 
+UBX_MODULE_LICENSE_SPDX(BSD-3-Clause)
+
 using namespace std;
 using brics_3d::Logger;
 

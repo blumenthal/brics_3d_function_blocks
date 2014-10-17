@@ -26,6 +26,8 @@
 /* BRICS_3D includes */
 //#include <brics_3d/worldModel/WorldModel.h>
 
+UBX_MODULE_LICENSE_SPDX(BSD-3-Clause)
+
 /* include types */
 #include "types/rsg_uuid.h"
 #include "types/rsg_uuid.h.hexarr"

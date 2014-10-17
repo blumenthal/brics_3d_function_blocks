@@ -47,6 +47,8 @@
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
 #include <brics_3d/algorithm/filtering/Octree.h>
 
+UBX_MODULE_LICENSE_SPDX(BSD-3-Clause)
+
 /* Helper maccros to support parametrized builds for this octreefilter */
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
