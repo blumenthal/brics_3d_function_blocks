@@ -12,6 +12,10 @@
 /* microblx includes */
 #include "ubx.h"
 
+/* microblx type for the robot scene graph */
+#include "../types/rsg/types/rsg_types.h"
+#include "brics_3d/util/UbxTypecaster.h"
+
 /* BRICS_3D includes */
 #include <brics_3d/core/Logger.h>
 #include <brics_3d/worldModel/WorldModel.h>
@@ -42,6 +46,7 @@ char testblock_meta[] =
  * if an array is required, then .value = { .len=<LENGTH> } can be used.
  */
 ubx_config_t testblock_config[] = {
+	{ .name="wm_handle", .type_name = "struct rsg_wm_handle", .doc="Handle to the world wodel instance. This parameter is mandatory."},
 	{ .name="test_conf", .type_name = "double" },
 	{ NULL },
 };
@@ -57,7 +62,15 @@ static int testblock_init(ubx_block_t *c)
 {
 	LOG(INFO) << "testblock_init: hi from " << c->name;
 
-	wmHandle = brics_3d::WorldModel::microBlxWmHandle;
+	unsigned int clen;
+	rsg_wm_handle tmpWmHandle =  *((rsg_wm_handle*) ubx_config_get_data_ptr(c, "wm_handle", &clen));
+	assert(clen != 0);
+	wmHandle = reinterpret_cast<brics_3d::WorldModel*>(tmpWmHandle.wm); // We know that this pointer stores the world model type
+	if(wmHandle == 0) {
+		LOG(FATAL) << "ROIFilter: World modle handle could not be initialized.";
+		return -1;
+	}
+
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
 
 	return 0;
