@@ -53,6 +53,10 @@
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 
+/* GPS utils*/
+#include "GpsConversions.h"
+
+
 UBX_MODULE_LICENSE_SPDX(BSD-3-Clause)
 
 using namespace std;
@@ -107,8 +111,8 @@ def_write_fun(write_rsg_ids, rsg_ids)
 static int osmloader_init(ubx_block_t *c)
 {
 	LOG(INFO) << "osmloader: initializing: " << c->name;
-//	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
-	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::INFO);
+	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+//	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::INFO);
 	brics_3d::Logger::setLogfile("osmloader.log");
 
 	unsigned int clen;
@@ -301,6 +305,8 @@ static void osmloader_step(ubx_block_t *c) {
 
     for (int i = 0; i < osmNodes->getLength(); ++i) {
     	unsigned int id = 0;
+    	double lon = -1.0;
+    	double lat = -1.0;
     	double x = -1.0;
     	double y = -1.0;
     	double z = 0.0;
@@ -324,7 +330,7 @@ static void osmloader_step(ubx_block_t *c) {
         if (attributeNode != 0) {
         	tmpResult = XMLString::transcode(attributeNode->getNodeValue());
         	LOG(DEBUG) << "\t node lon = " << tmpResult;
-        	x = atof(tmpResult.c_str());
+        	lon = atof(tmpResult.c_str());
         }
 
         // lat
@@ -332,7 +338,7 @@ static void osmloader_step(ubx_block_t *c) {
         if (attributeNode != 0) {
         	tmpResult = XMLString::transcode(attributeNode->getNodeValue());
         	LOG(DEBUG) << "\t node lat = " << tmpResult;
-        	y = atof(tmpResult.c_str());
+        	lat = atof(tmpResult.c_str());
         }
 
         //tags are in the child nodes
@@ -371,6 +377,12 @@ static void osmloader_step(ubx_block_t *c) {
         		tags.push_back(tag);
         	}
         }
+
+        string zone;
+        UTM::LLtoUTM(lon, lat, x, y, zone);
+        x -= 794242; // just for visualizer
+        y -= 475452;
+        LOG(DEBUG) << "Pose = (" << x << ", " << y << ", " << z << ") in zone: " << zone;
 
         /* Add to RSG */
         brics_3d::rsg::Id poseId;
