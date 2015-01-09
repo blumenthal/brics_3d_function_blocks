@@ -47,6 +47,8 @@
 
 #include <brics_3d/core/HomogeneousMatrix44.h> // concrete type
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
+#include <brics_3d/core/TriangleMeshImplicit.h>// concrete type
+#include <brics_3d/core/TriangleMeshExplicit.h>// concrete type
 
 /* Xerces includes for XML handling */
 #include <xercesc/util/PlatformUtils.hpp>
@@ -264,6 +266,7 @@ static void osmloader_step(ubx_block_t *c) {
     XMLCh* latName = XMLString::transcode("lat");
     XMLCh* lonName = XMLString::transcode("lon");
     XMLCh* wayName = XMLString::transcode("way");
+    XMLCh* refName = XMLString::transcode("ref");
     XMLCh* versionName = XMLString::transcode("version");
     string tmpResult;
     string osmAttributePrefix = "osm::";
@@ -364,7 +367,7 @@ static void osmloader_step(ubx_block_t *c) {
         			continue;
         		}
 
-        		// n
+        		// v
         		attributeNode = childAttributesList->getNamedItem(vName);
         		if (attributeNode != 0) {
         			tmpResult = XMLString::transcode(attributeNode->getNodeValue());
@@ -403,19 +406,143 @@ static void osmloader_step(ubx_block_t *c) {
     LOG(INFO) << "osmloader: " << nodeCounter <<" nodes loaded.";
 
     /* osm ways */
+
+    /* e.g.
+     * <way id="139281027">
+     *		<nd ref="1526916568"/>
+     *		<nd ref="2280218902"/>
+     *		<nd ref="1526916486"/>
+     *		<tag k="highway" v="residential"/>
+     *		<tag k="maxspeed" v="30"/>
+     *  	<tag k="name" v="Südstraße"/>
+     * </way>
+     */
     DOMNodeList* wayNodes = doc->getElementsByTagName(wayName);
 
     for (int i = 0; i < wayNodes->getLength(); ++i) {
+    	unsigned int id = 0;
+
         current = wayNodes->item(i);
 
         attributesList =  current->getAttributes();
         attributeNode = attributesList->getNamedItem(idName);
 
+        // id
         if (attributeNode != 0) {
         	tmpResult = XMLString::transcode(attributeNode->getNodeValue());
         	LOG(DEBUG) << "way id = " << tmpResult;
+        	id = atoi(tmpResult.c_str());
         }
-	}
+
+        /*
+         * check children for tags node references
+         */
+        DOMNodeList* childs = current->getChildNodes();
+
+    	vector<brics_3d::rsg::Attribute> tags;
+    	vector<brics_3d::rsg::Id> nodeReferences;
+
+         for (int j = 0; j < childs->getLength(); ++j) {
+         	currentChild = childs->item(j);
+         	childAttributesList =  currentChild->getAttributes();
+
+
+         	tmpResult = XMLString::transcode(currentChild->getNodeName());
+         	LOG(DEBUG) << "\t childName = " << tmpResult;
+         	if(tmpResult.compare("tag") == 0) {
+         		LOG(DEBUG) << "\t found a tag: ";
+         		brics_3d::rsg::Attribute tag;
+
+         		// k
+         		attributeNode = childAttributesList->getNamedItem(kName);
+         		if (attributeNode != 0) {
+         			tmpResult = XMLString::transcode(attributeNode->getNodeValue());
+         			LOG(DEBUG) << "\t\t node k = " << tmpResult;
+         			tag.key = tmpResult;
+         		} else {
+         			continue;
+         		}
+
+         		// v
+         		attributeNode = childAttributesList->getNamedItem(vName);
+         		if (attributeNode != 0) {
+         			tmpResult = XMLString::transcode(attributeNode->getNodeValue());
+         			LOG(DEBUG) << "\t\t node v = " << tmpResult;
+         			tag.value = tmpResult;
+         		} else {
+         			continue;
+         		}
+
+         		tags.push_back(tag);
+         	} else if (tmpResult.compare("nd") == 0) {
+           		LOG(DEBUG) << "\t found a reference: ";
+         		unsigned int tmpId;
+
+         		// ref
+         		attributeNode = childAttributesList->getNamedItem(refName);
+         		if (attributeNode != 0) {
+         			tmpResult = XMLString::transcode(attributeNode->getNodeValue());
+         			LOG(DEBUG) << "\t\t node ref = " << tmpResult;
+         			tmpId = atoi(tmpResult.c_str());
+         		} else {
+         			continue;
+         		}
+
+         		brics_3d::rsg::Id refId = tmpId;
+         		nodeReferences.push_back(refId);
+//         		nodeReferences
+         	}
+         }
+
+         /* Add to RSG as Connection */
+         brics_3d::rsg::Id wayId = id; //TODO add mask
+     	 vector<brics_3d::rsg::Id> emptyList;
+     	 LOG(INFO) << "Adding Connection with ID " << id << ", containing " << nodeReferences.size() << " references.";
+         wmHandle->scene.addConnection(outputHookId, wayId, tags, nodeReferences, emptyList, true);
+         wayCounter++;
+
+        /* Add a mesh as visualization of the connection, NOTE: this is static */
+
+         if(nodeReferences.size() >= 2) {
+        	 brics_3d::rsg::Id currentNode = nodeReferences[1];
+        	 brics_3d::rsg::Id lastNode = nodeReferences[0];
+        	 brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr resultTf(new brics_3d::HomogeneousMatrix44());
+
+        	 brics_3d::ITriangleMesh::ITriangleMeshPtr newMesh(new brics_3d::TriangleMeshExplicit());
+        	 brics_3d::rsg::Mesh<brics_3d::ITriangleMesh>::MeshPtr newMeshContainer(new brics_3d::rsg::Mesh<brics_3d::ITriangleMesh>());
+        	 newMeshContainer->data = newMesh;
+
+        	 for (int i = 1; i < nodeReferences.size(); ++i) {
+        		 currentNode = nodeReferences[i];
+        		 double x1, y1, x2, y2;
+        		 if( wmHandle->scene.getTransformForNode(lastNode, outputHookId, wmHandle->now(), resultTf)) {
+        			 x1 = resultTf->getRawData()[brics_3d::matrixEntry::x];
+        			 y1 = resultTf->getRawData()[brics_3d::matrixEntry::y];
+        		 } else {
+        			 continue;
+        		 }
+
+        		 if( wmHandle->scene.getTransformForNode(currentNode, outputHookId, wmHandle->now(), resultTf)) {
+        			 x2 = resultTf->getRawData()[brics_3d::matrixEntry::x];
+        			 y2 = resultTf->getRawData()[brics_3d::matrixEntry::y];
+        		 } else {
+        			 continue;
+        		 }
+        		 lastNode = currentNode;
+
+        		 LOG(DEBUG) << "Segment:" << x1 << ", " << y1 << ", " << x2 << ", " << y2;
+            	 double yOffset = -0.1; //m
+        		 newMesh->addTriangle(brics_3d::Point3D(x1,y1,0), brics_3d::Point3D(x1,y1+yOffset,0), brics_3d::Point3D(x2,y2,0) );
+        	 }
+
+        	 LOG(DEBUG) << "Adding a mesh with "  << newMesh->getSize() << " triangles to visualize a way.";
+        	 brics_3d::rsg::Id meshId;
+        	 vector<brics_3d::rsg::Attribute> meshAttributes;
+        	 meshAttributes.push_back(brics_3d::rsg::Attribute("name","mesh"));
+        	 wmHandle->scene.addGeometricNode(outputHookId, meshId, meshAttributes, newMeshContainer, wmHandle->now());
+
+         }
+    }
 
     LOG(INFO) << "osmloader: " << wayCounter <<" ways loaded.";
 
