@@ -305,14 +305,14 @@ static void osmloader_step(ubx_block_t *c) {
 
     /* osm nodes */
     DOMNodeList* osmNodes = doc->getElementsByTagName(nodeName);
+	double x = -1.0;
+	double y = -1.0;
+	double z = 0.0;
 
     for (int i = 0; i < osmNodes->getLength(); ++i) {
     	unsigned int id = 0;
     	double lon = -1.0;
     	double lat = -1.0;
-    	double x = -1.0;
-    	double y = -1.0;
-    	double z = 0.0;
     	vector<brics_3d::rsg::Attribute> tags;
     	brics_3d::rsg::TimeStamp time = wmHandle->now();
 
@@ -383,9 +383,9 @@ static void osmloader_step(ubx_block_t *c) {
 
         string zone;
         UTM::LLtoUTM(lon, lat, x, y, zone);
-        x -= 794242; // just for visualizer
-        y -= 475452;
         LOG(DEBUG) << "Pose = (" << x << ", " << y << ", " << z << ") in zone: " << zone;
+
+
 
         /* Add to RSG */
         brics_3d::rsg::Id poseId;
@@ -404,6 +404,16 @@ static void osmloader_step(ubx_block_t *c) {
 	}
 
     LOG(INFO) << "osmloader: " << nodeCounter <<" nodes loaded.";
+
+
+    /* place  the camera for the visualizer, based on the last loaded node  */
+    brics_3d::rsg::Id camearaId;
+    vector<brics_3d::rsg::Attribute> cameraAttributes;
+    cameraAttributes.push_back(brics_3d::rsg::Attribute("osg::camera","home"));
+    brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr poseOfCamera(new brics_3d::HomogeneousMatrix44(1,0,0, 0,1,0, 0,0,1, x,y,z));
+    wmHandle->scene.addTransformNode(outputHookId, camearaId, cameraAttributes, poseOfCamera, wmHandle->now());
+    //output.push_back(camearaId);
+
 
     /* osm ways */
 
@@ -490,7 +500,6 @@ static void osmloader_step(ubx_block_t *c) {
 
          		brics_3d::rsg::Id refId = tmpId;
          		nodeReferences.push_back(refId);
-//         		nodeReferences
          	}
          }
 
@@ -502,7 +511,6 @@ static void osmloader_step(ubx_block_t *c) {
          wayCounter++;
 
         /* Add a mesh as visualization of the connection, NOTE: this is static */
-
          if(nodeReferences.size() >= 2) {
         	 brics_3d::rsg::Id currentNode = nodeReferences[1];
         	 brics_3d::rsg::Id lastNode = nodeReferences[0];
@@ -531,7 +539,7 @@ static void osmloader_step(ubx_block_t *c) {
         		 lastNode = currentNode;
 
         		 LOG(DEBUG) << "Segment:" << x1 << ", " << y1 << ", " << x2 << ", " << y2;
-            	 double yOffset = -0.1; //m
+        		 double yOffset = -0.1; //m
         		 newMesh->addTriangle(brics_3d::Point3D(x1,y1,0), brics_3d::Point3D(x1,y1+yOffset,0), brics_3d::Point3D(x2,y2,0) );
         	 }
 
@@ -549,27 +557,18 @@ static void osmloader_step(ubx_block_t *c) {
     /* clean up xml dom */
     XMLString::release(&nodeName);
     XMLString::release(&tagName);
+    XMLString::release(&wayName );
+    XMLString::release(&kName);
+    XMLString::release(&vName);
+    XMLString::release(&idName);
+    XMLString::release(&latName );
+    XMLString::release(&lonName);
+    XMLString::release(& wayName);
+    XMLString::release(&refName);
+    XMLString::release(&versionName);
 
 
 
-
-
-	/*
-	 * prepare output
-	 */
-//    brics_3d::rsg::Id roiPointCloudId = 21;
-//    std::vector<brics_3d::rsg::Attribute> attributes;
-//    attributes.clear();
-//    attributes.push_back(brics_3d::rsg::Attribute("name","point_cloud"));
-//    attributes.push_back(brics_3d::rsg::Attribute("origin","osmloader"));
-//	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now());
-
-
-	/* store what we did to the world model in the output vector */
-//	std::vector<brics_3d::rsg::Id> output;
-//	output.clear();
-//	output.push_back(outputHookId); // We feed forward the output hook as first ID.
-//	output.push_back(roiPointCloudId); // This is what we added.
 
 	/* push output to microblx */
 	ubx_port_t* outputPort = ubx_port_get(c, "outputDataIds");
