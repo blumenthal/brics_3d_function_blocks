@@ -507,7 +507,7 @@ static void osmloader_step(ubx_block_t *c) {
          brics_3d::rsg::Id wayId = id; //TODO add mask
      	 vector<brics_3d::rsg::Id> emptyList;
      	 LOG(INFO) << "Adding Connection with ID " << id << ", containing " << nodeReferences.size() << " references.";
-         wmHandle->scene.addConnection(outputHookId, wayId, tags, nodeReferences, emptyList, true);
+         wmHandle->scene.addConnection(outputHookId, wayId, tags, nodeReferences, emptyList, wmHandle->now(), wmHandle-> now(), true);
          wayCounter++;
 
         /* Add a mesh as visualization of the connection, NOTE: this is static */
