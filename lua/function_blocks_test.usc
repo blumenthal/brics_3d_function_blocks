@@ -4,7 +4,9 @@ local bd = require("blockdiagram")
 local rsg = require("rsg")
 local fbx_path = os.getenv("FBX_MODULES") .. "/" 
 
-myWm = rsg.WorldModel()
+--myWm = rsg.WorldModel()
+local worldModelAgentId = "a0963099-baa7-4c25-9650-26c34be11307"
+myWm = rsg.WorldModelWithId(worldModelAgentId)
 
 return bd.system
 {

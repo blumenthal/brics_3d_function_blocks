@@ -18,6 +18,7 @@
  ******************************************************************************/
 
 #include "WorldModelLuaBinding.h"
+#include <brics_3d/worldModel/sceneGraph/UuidGenerator.h>
 
 extern "C" {
 
@@ -26,6 +27,25 @@ WorldModel* WorldModel_WorldModel() {
 
 	/* Configure the logger - default level won't tell us much */
 	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+
+	return new WorldModel();
+}
+
+WorldModel* WorldModel_WorldModelWithId(const char* idAsString) {
+
+	/* Configure the logger - default level won't tell us much */
+	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+
+	std::string id(idAsString);
+	LOG(DEBUG) << "[Id] = " << id;
+	brics_3d::rsg::Id rootId;
+	if(rootId.fromString(id)) {
+		LOG(INFO) << "Preconfigured rootId is: " << rootId;
+		return new WorldModel(new brics_3d::rsg::UuidGenerator(rootId));
+	} else {
+		LOG(ERROR) << "Failed to parse root id. Given: " << id << " Falling back to default Id.";
+	}
+
 
 	return new WorldModel();
 }

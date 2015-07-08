@@ -38,6 +38,7 @@ typedef struct WorldModel WorldModel;
 typedef struct rsg_wm_handle rsg_wm_handle;
  
 WorldModel* WorldModel_WorldModel();
+WorldModel* WorldModel_WorldModelWithId(const char* idAsString);
 void WorldModel__gc(WorldModel *);
 
 rsg_wm_handle* WorldModel_getHandle(WorldModel *);
@@ -58,6 +59,17 @@ end
 function M.WorldModel(...)
 	local self = {super = world_model.WorldModel_WorldModel(...)}
 	ffi.gc(self.super, world_model.WorldModel__gc)
+return setmetatable(self, mt)
+end
+
+--- Constructor for a new instance of a world model with a predifined root Id for the world model agent.
+-- This will be used within a function blocks for instance.
+-- @param id A UUID in hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh format. Invalid id will casse a fallbach to 
+--            the default behaviour as defined by the M.WorldModel(...) constructor.            
+-- @return Table/class instance of a world model
+function M.WorldModelWithId(id)
+  local self = {super = world_model.WorldModel_WorldModelWithId(id)}
+  ffi.gc(self.super, world_model.WorldModel__gc)
 return setmetatable(self, mt)
 end
 
