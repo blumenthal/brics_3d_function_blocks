@@ -8,7 +8,7 @@
 
 # pointers to the relveant modules (this has to be needed to be adopted for individual systms)
 export UBX_MODULES=$UBX_ROOT
-export FBX_MODULES=$BRICS_3D_FUNCTION_BLOCKS_DIR
+#export FBX_MODULES=$BRICS_3D_FUNCTION_BLOCKS_DIR
 
 # set up some other environtment scripts
 source $UBX_ROOT/env.sh

@@ -2,7 +2,7 @@
 
 local bd = require("blockdiagram")
 local rsg = require("rsg")
-local fbx_path = os.getenv("BRICS_3D_FUNCTION_BLOCKS_DIR") .. "/" 
+local fbx_path = os.getenv("FBX_MODULES") .. "/" 
 
 myWm = rsg.WorldModel()
 
