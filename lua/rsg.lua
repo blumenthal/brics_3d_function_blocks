@@ -42,6 +42,8 @@ WorldModel* WorldModel_WorldModelWithId(const char* idAsString);
 void WorldModel__gc(WorldModel *);
 
 rsg_wm_handle* WorldModel_getHandle(WorldModel *);
+const char* WorldModel_getRootId(WorldModel *);
+bool WorldModel_addNodeAttribute(WorldModel *, const char* idAsString, const char* key, const char* value); 
 ]]
 
 -- Mimic the brics_3d::WordlModel with a lua version (mt) of that class
@@ -51,6 +53,21 @@ mt.__index = mt
 --- Retrive a "handle" than can pa passes to a config file of a function block.
 function mt.getHandle(self, ...)
 	return world_model.WorldModel_getHandle(self.super, ...)
+end
+
+--- Get the root id in hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh format.
+function mt.getRootId(self, ...)
+  return ffi.string(world_model.WorldModel_getRootId(self.super, ...))
+end
+
+--- Add an attribute-value pair to a node, indentified by its Id.
+-- @param id A UUID in hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh format.
+-- @param key Key as a string
+-- @param value values as a string
+-- @return True on success. 
+function mt.addNodeAttribute(self, id, key, value)
+--  print (id .. " " .. key .. " " .. value)
+  return world_model.WorldModel_addNodeAttribute(self.super, id, key, value);
 end
 
 --- Constructor for a new instance of a world model.
