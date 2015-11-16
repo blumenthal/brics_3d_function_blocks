@@ -113,8 +113,8 @@ def_write_fun(write_rsg_ids, rsg_ids)
 static int osmloader_init(ubx_block_t *c)
 {
 	LOG(INFO) << "osmloader: initializing: " << c->name;
-	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
-//	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::INFO);
+//	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::INFO);
 	brics_3d::Logger::setLogfile("osmloader.log");
 
 	unsigned int clen;
@@ -506,7 +506,7 @@ static void osmloader_step(ubx_block_t *c) {
          /* Add to RSG as Connection */
          brics_3d::rsg::Id wayId = id; //TODO add mask
      	 vector<brics_3d::rsg::Id> emptyList;
-     	 LOG(INFO) << "Adding Connection with ID " << id << ", containing " << nodeReferences.size() << " references.";
+     	 LOG(DEBUG) << "Adding Connection with ID " << id << ", containing " << nodeReferences.size() << " references.";
          wmHandle->scene.addConnection(outputHookId, wayId, tags, nodeReferences, emptyList, wmHandle->now(), wmHandle-> now(), true);
          wayCounter++;
 
