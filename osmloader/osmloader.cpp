@@ -203,7 +203,7 @@ static void osmloader_step(ubx_block_t *c) {
 	 */
 
 	std::string dataSetFolder = "/opt/src/sandbox/brics_3d_function_blocks/data";
-	std::string dataSet = dataSetFolder + "/way_example.osm";
+	std::string dataSet = *fileName;
     LOG(INFO) << "osmloader: Using file " << dataSet << " .";
 
     /*
@@ -267,6 +267,9 @@ static void osmloader_step(ubx_block_t *c) {
 	}
 
     LOG(INFO) << "osmloader: Read file. Error: " << errorsOccured;
+    if(errorsOccured) {
+    	return;
+    }
 
     /* parse xml file */
     DOMNode* current = 0;
