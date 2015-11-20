@@ -70,6 +70,7 @@ brics_3d::rsg::DotGraphGenerator* wmPrinter = 0;
 brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr center;
 
 std::string* fileName;
+bool convertToUtm;
 
 /* XML DOM representation */
 XercesDOMParser* parser;
@@ -141,7 +142,22 @@ static int osmloader_init(ubx_block_t *c)
 			*fileName = map_file;
 		}
 	}
-	LOG(DEBUG) << "rsg_dump: map_file = " << *fileName;
+	LOG(DEBUG) << "osmloader: map_file = " << *fileName;
+
+	convertToUtm = true;
+	int* convert_to_utm =  ((int*) ubx_config_get_data_ptr(c, "convert_to_utm", &clen));
+	if(clen == 0) {
+		LOG(INFO) << "osmloader: No convert_to_utm configuation given. Turned on by default.";
+	} else {
+		if (*convert_to_utm == 1) {
+			LOG(INFO) << "osmloader: convert_to_utm turned on.";
+			convertToUtm = true;
+		} else {
+			LOG(INFO) << "osmloader: convert_to_utm turned off.";
+			convertToUtm = false;
+		}
+	}
+	LOG(DEBUG) << "osmloader: convertToUtm = " << convertToUtm;
 
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
 
@@ -402,7 +418,12 @@ static void osmloader_step(ubx_block_t *c) {
         }
 
         string zone;
-        UTM::LLtoUTM(lon, lat, x, y, zone);
+        if(convertToUtm) {
+        	UTM::LLtoUTM(lon, lat, x, y, zone);
+        } else {
+        	x = lon;
+        	y = lat;
+        }
         LOG(DEBUG) << "Pose = (" << x << ", " << y << ", " << z << ") in zone: " << zone;
 
 
