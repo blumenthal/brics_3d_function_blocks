@@ -13,6 +13,12 @@ SET(CMAKE_CXX_FLAGS "-Wall -Werror -fvisibility=hidden")
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/bin/ CACHE PATH "Configure the executable output path.")
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/lib/ CACHE PATH "Configure the library output path.")
 
+set(INSTALL_LIB_TYPES_DIR lib/ubx/types CACHE PATH "Installation directory for types libraries")
+set(INSTALL_LIB_BLOCKS_DIR lib/ubx/blocks CACHE PATH "Installation directory for blocks libraries")
+set(INSTALL_INCLUDE_DIR include/ubx CACHE PATH "Installation directory for header files (types)")
+set(INSTALL_CMAKE_DIR  share/ubx/cmake CACHE PATH  "Installation directory for CMake files") # default ${DEF_INSTALL_CMAKE_DIR}
+
+
 OPTION(USE_OSG "Enable Open Scene Graph" OFF) #there are still some issues with the clang compiler
 OPTION(USE_FBX "Enable Function Blocks" OFF) # to avoid be abele to break cyclic dependencies.
 

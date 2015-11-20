@@ -67,13 +67,13 @@ using namespace xercesc_3_1;
 
 brics_3d::WorldModel* wmHandle = 0;
 brics_3d::rsg::DotGraphGenerator* wmPrinter = 0;
-
 brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr center;
+
+std::string* fileName;
 
 /* XML DOM representation */
 XercesDOMParser* parser;
 
-double octreeCellSize;
 
 
 /* function block meta-data
@@ -94,6 +94,8 @@ char osmloader_meta[] =
  */
 ubx_config_t osmloader_config[] = {
 	{ .name="wm_handle", .type_name = "struct rsg_wm_handle", .doc="Handle to the world wodel instance. This parameter is mandatory."},
+    { .name="map_file", .type_name = "char" , .doc="OSM file name to be loaded to RSG." },
+    { .name="convert_to_utm", .type_name = "int", .doc="If true every pose will be converted into the UTM representation." },
 	{ NULL },
 };
 
@@ -125,6 +127,21 @@ static int osmloader_init(ubx_block_t *c)
 		LOG(FATAL) << "osmloader: World model handle could not be initialized.";
 		return -1;
 	}
+
+	/* retrive optional dot file prefix from config */
+	fileName = new std::string("map.osm");
+	char* chrptr = (char*) ubx_config_get_data_ptr(c, "map_file", &clen);
+	if(clen == 0) {
+		LOG(INFO) << "osmloader: No map_file configuation given. Selecting a default name.";
+	} else {
+		if(strcmp(chrptr, "")==0) {
+			LOG(INFO) << "osmloader: map_file is empty. Selecting a default name.";
+		} else {
+			std::string map_file(chrptr);
+			*fileName = map_file;
+		}
+	}
+	LOG(DEBUG) << "rsg_dump: map_file = " << *fileName;
 
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
 
