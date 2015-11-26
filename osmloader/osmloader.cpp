@@ -97,6 +97,7 @@ ubx_config_t osmloader_config[] = {
 	{ .name="wm_handle", .type_name = "struct rsg_wm_handle", .doc="Handle to the world wodel instance. This parameter is mandatory."},
     { .name="map_file", .type_name = "char" , .doc="OSM file name to be loaded to RSG." },
     { .name="convert_to_utm", .type_name = "int", .doc="If true every pose will be converted into the UTM representation." },
+    { .name="log_level", .type_name = "int", .doc="Set the log level: LOGDEBUG = 0, INFO = 1, WARNING = 2, LOGERROR = 3, FATAL = 4" },
 	{ NULL },
 };
 
@@ -178,6 +179,32 @@ static void osmloader_cleanup(ubx_block_t *c)
 static int osmloader_start(ubx_block_t *c)
 {
 	LOG(INFO) << "osmloader: starting. " << c->name;
+
+	/* Set logger level */
+	unsigned int clen;
+	int* log_level =  ((int*) ubx_config_get_data_ptr(c, "log_level", &clen));
+	if(clen == 0) {
+		LOG(INFO) << "osmloader: No log_level configuation given.";
+	} else {
+		if (*log_level == 0) {
+			LOG(INFO) << "osmloader: log_level set to DEBUG level.";
+			brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+		} else if (*log_level == 1) {
+			LOG(INFO) << "osmloader: log_level set to INFO level.";
+			brics_3d::Logger::setMinLoglevel(brics_3d::Logger::INFO);
+		} else if (*log_level == 2) {
+			LOG(INFO) << "osmloader: log_level set to WARNING level.";
+			brics_3d::Logger::setMinLoglevel(brics_3d::Logger::WARNING);
+		} else if (*log_level == 3) {
+			LOG(INFO) << "osmloader: log_level set to LOGERROR level.";
+			brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGERROR);
+		} else if (*log_level == 4) {
+			LOG(INFO) << "osmloader: log_level set to FATAL level.";
+			brics_3d::Logger::setMinLoglevel(brics_3d::Logger::FATAL);
+		} else {
+			LOG(INFO) << "osmloader: unknown log_level = " << *log_level;		}
+	}
+
 	return 0; /* Ok */
 }
 
