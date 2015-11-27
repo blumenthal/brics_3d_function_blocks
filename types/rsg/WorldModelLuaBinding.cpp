@@ -38,13 +38,13 @@ WorldModel* WorldModel_WorldModelWithId(const char* idAsString) {
 	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
 
 	std::string id(idAsString);
-	LOG(DEBUG) << "[Id] = " << id;
+	LOG(DEBUG) << "WorldModel: [Id] = " << id;
 	brics_3d::rsg::Id rootId;
 	if(rootId.fromString(id)) {
-		LOG(INFO) << "Preconfigured rootId is: " << rootId;
+		LOG(INFO) << "WorldModel: Preconfigured rootId is: " << rootId;
 		return new WorldModel(new brics_3d::rsg::UuidGenerator(rootId));
 	} else {
-		LOG(ERROR) << "Failed to parse root id. Given: " << id << " Falling back to default Id.";
+		LOG(ERROR) << "WorldModel: Failed to parse root id. Given: " << id << " Falling back to default Id.";
 	}
 
 
@@ -103,6 +103,31 @@ bool WorldModel_addNodeAttribute(WorldModel *this_, const char* idAsString, cons
 
 	/* Update node */
 	if(!this_->scene.setNodeAttributes(id, attributes)) { return false; }
+
+	return true;
+}
+
+bool WorldModel_setLogLevel(WorldModel *this_, int logLevel) {
+
+	/* Set logger level */
+	if (logLevel == 0) {
+		LOG(INFO) << "WorldModel: log_level set to DEBUG level.";
+		brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
+	} else if (logLevel == 1) {
+		LOG(INFO) << "WorldModel: log_level set to INFO level.";
+		brics_3d::Logger::setMinLoglevel(brics_3d::Logger::INFO);
+	} else if (logLevel == 2) {
+		LOG(INFO) << "WorldModel: log_level set to WARNING level.";
+		brics_3d::Logger::setMinLoglevel(brics_3d::Logger::WARNING);
+	} else if (logLevel == 3) {
+		LOG(INFO) << "WorldModel: log_level set to LOGERROR level.";
+		brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGERROR);
+	} else if (logLevel == 4) {
+		LOG(INFO) << "WorldModel: log_level set to FATAL level.";
+		brics_3d::Logger::setMinLoglevel(brics_3d::Logger::FATAL);
+	} else {
+		LOG(INFO) << "WorldModel: unknown log_level = " << logLevel;
+	}
 
 	return true;
 }

@@ -43,7 +43,8 @@ void WorldModel__gc(WorldModel *);
 
 rsg_wm_handle* WorldModel_getHandle(WorldModel *);
 const char* WorldModel_getRootId(WorldModel *);
-bool WorldModel_addNodeAttribute(WorldModel *, const char* idAsString, const char* key, const char* value); 
+bool WorldModel_addNodeAttribute(WorldModel *, const char* idAsString, const char* key, const char* value);
+bool WorldModel_setLogLevel(WorldModel *, int logLevel); 
 ]]
 
 -- Mimic the brics_3d::WordlModel with a lua version (mt) of that class
@@ -88,6 +89,11 @@ function M.WorldModelWithId(id)
   local self = {super = world_model.WorldModel_WorldModelWithId(id)}
   ffi.gc(self.super, world_model.WorldModel__gc)
 return setmetatable(self, mt)
+end
+
+function mt.setLogLevel(self, logLevel)
+--  print (id .. " " .. key .. " " .. value)
+  return world_model.WorldModel_setLogLevel(self.super, logLevel);
 end
 
 --myWm = M.WorldModel()
