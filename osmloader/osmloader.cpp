@@ -155,7 +155,7 @@ static int osmloader_init(ubx_block_t *c)
 			convertToUtm = true;
 		} else {
 			LOG(INFO) << "osmloader: convert_to_utm turned off.";
-			convertToUtm = false;
+			convertToUtm = true;
 		}
 	}
 	LOG(DEBUG) << "osmloader: convertToUtm = " << convertToUtm;
@@ -332,7 +332,7 @@ static void osmloader_step(ubx_block_t *c) {
     XMLCh* refName = XMLString::transcode("ref");
     XMLCh* versionName = XMLString::transcode("version");
     string tmpResult;
-    string osmAttributePrefix = "osm::";
+    string osmAttributePrefix = "osm:";
     unsigned int nodeCounter = 0;
     unsigned int wayCounter = 0;
 
@@ -388,6 +388,7 @@ static void osmloader_step(ubx_block_t *c) {
         if (attributeNode != 0) {
         	tmpResult = XMLString::transcode(attributeNode->getNodeValue());
         	LOG(DEBUG) << "node id = " << tmpResult;
+        	tags.push_back(brics_3d::rsg::Attribute(osmAttributePrefix+"node_id", tmpResult));
         	id = atoi(tmpResult.c_str());
         }
 
@@ -425,7 +426,7 @@ static void osmloader_step(ubx_block_t *c) {
         		if (attributeNode != 0) {
         			tmpResult = XMLString::transcode(attributeNode->getNodeValue());
         			LOG(DEBUG) << "\t\t node k = " << tmpResult;
-        			tag.key = tmpResult;
+        			tag.key = osmAttributePrefix+tmpResult;
         		} else {
         			continue;
         		}
@@ -504,11 +505,14 @@ static void osmloader_step(ubx_block_t *c) {
 
         attributesList =  current->getAttributes();
         attributeNode = attributesList->getNamedItem(idName);
+    	vector<brics_3d::rsg::Attribute> tags;
+    	vector<brics_3d::rsg::Id> nodeReferences;
 
         // id
         if (attributeNode != 0) {
         	tmpResult = XMLString::transcode(attributeNode->getNodeValue());
         	LOG(DEBUG) << "way id = " << tmpResult;
+        	tags.push_back(brics_3d::rsg::Attribute(osmAttributePrefix+"way_id", tmpResult));
         	id = atoi(tmpResult.c_str());
         }
 
@@ -517,8 +521,6 @@ static void osmloader_step(ubx_block_t *c) {
          */
         DOMNodeList* childs = current->getChildNodes();
 
-    	vector<brics_3d::rsg::Attribute> tags;
-    	vector<brics_3d::rsg::Id> nodeReferences;
 
          for (int j = 0; j < childs->getLength(); ++j) {
          	currentChild = childs->item(j);
@@ -536,7 +538,7 @@ static void osmloader_step(ubx_block_t *c) {
          		if (attributeNode != 0) {
          			tmpResult = XMLString::transcode(attributeNode->getNodeValue());
          			LOG(DEBUG) << "\t\t node k = " << tmpResult;
-         			tag.key = tmpResult;
+         			tag.key = osmAttributePrefix+tmpResult;
          		} else {
          			continue;
          		}
@@ -575,7 +577,7 @@ static void osmloader_step(ubx_block_t *c) {
          brics_3d::rsg::Id wayId = id; //TODO add mask
      	 vector<brics_3d::rsg::Id> emptyList;
      	 LOG(DEBUG) << "Adding Connection with ID " << id << ", containing " << nodeReferences.size() << " references.";
-         wmHandle->scene.addConnection(outputHookId, wayId, tags, nodeReferences, emptyList, wmHandle->now(), wmHandle-> now(), true);
+         wmHandle->scene.addConnection(outputHookId, wayId, tags, emptyList, nodeReferences , wmHandle->now(), wmHandle-> now(), true);
          wayCounter++;
 
         /* Add a mesh as visualization of the connection, NOTE: this is static */
