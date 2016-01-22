@@ -241,6 +241,17 @@ static void osmloader_step(ubx_block_t *c) {
 	output.clear();
 	output.push_back(outputHookId); // First ID is always the output hook.
 
+
+	brics_3d::rsg::Id originId;
+	std::vector<brics_3d::rsg::Attribute> originAttributes;
+	if(convertToUtm) {
+		originAttributes.push_back(brics_3d::rsg::Attribute("gis:origin","utm"));
+	} else {
+		originAttributes.push_back(brics_3d::rsg::Attribute("gis:origin","wgs84"));
+	}
+	wmHandle->scene.addGroup(outputHookId, originId, originAttributes);
+
+
 	/*
 	 * get and set config data
 	 */
@@ -462,8 +473,14 @@ static void osmloader_step(ubx_block_t *c) {
 
     	vector<brics_3d::rsg::Attribute> poseAttributes;
     	poseAttributes.push_back(brics_3d::rsg::Attribute(osmAttributePrefix + "tf","pose"));
+    	if(convertToUtm) {
+        	poseAttributes.push_back(brics_3d::rsg::Attribute("tf:type","utm"));
+        	poseAttributes.push_back(brics_3d::rsg::Attribute("tf:utm_zone", zone));
+    	} else {
+        	poseAttributes.push_back(brics_3d::rsg::Attribute("tf:type","wgs84"));
+    	}
         brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr poseOfNode(new brics_3d::HomogeneousMatrix44(1,0,0, 0,1,0, 0,0,1, x,y,z));
-        wmHandle->scene.addTransformNode(outputHookId, poseId, poseAttributes, poseOfNode, time);
+        wmHandle->scene.addTransformNode(originId, poseId, poseAttributes, poseOfNode, time);
         output.push_back(poseId);
 
         wmHandle->scene.addNode(poseId, nodeId, tags, true);
@@ -480,7 +497,7 @@ static void osmloader_step(ubx_block_t *c) {
     vector<brics_3d::rsg::Attribute> cameraAttributes;
     cameraAttributes.push_back(brics_3d::rsg::Attribute("osg::camera","home"));
     brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr poseOfCamera(new brics_3d::HomogeneousMatrix44(1,0,0, 0,1,0, 0,0,1, x,y,z));
-    wmHandle->scene.addTransformNode(outputHookId, camearaId, cameraAttributes, poseOfCamera, wmHandle->now());
+    wmHandle->scene.addTransformNode(originId, camearaId, cameraAttributes, poseOfCamera, wmHandle->now());
     //output.push_back(camearaId);
 
 
@@ -577,7 +594,7 @@ static void osmloader_step(ubx_block_t *c) {
          brics_3d::rsg::Id wayId = id; //TODO add mask
      	 vector<brics_3d::rsg::Id> emptyList;
      	 LOG(DEBUG) << "Adding Connection with ID " << id << ", containing " << nodeReferences.size() << " references.";
-         wmHandle->scene.addConnection(outputHookId, wayId, tags, emptyList, nodeReferences , wmHandle->now(), wmHandle-> now(), true);
+         wmHandle->scene.addConnection(originId, wayId, tags, emptyList, nodeReferences , wmHandle->now(), wmHandle-> now(), true);
          wayCounter++;
 
         /* Add a mesh as visualization of the connection, NOTE: this is static */
@@ -593,14 +610,14 @@ static void osmloader_step(ubx_block_t *c) {
         	 for (int i = 1; i < nodeReferences.size(); ++i) {
         		 currentNode = nodeReferences[i];
         		 double x1, y1, x2, y2;
-        		 if( wmHandle->scene.getTransformForNode(lastNode, outputHookId, wmHandle->now(), resultTf)) {
+        		 if( wmHandle->scene.getTransformForNode(lastNode, originId, wmHandle->now(), resultTf)) {
         			 x1 = resultTf->getRawData()[brics_3d::matrixEntry::x];
         			 y1 = resultTf->getRawData()[brics_3d::matrixEntry::y];
         		 } else {
         			 continue;
         		 }
 
-        		 if( wmHandle->scene.getTransformForNode(currentNode, outputHookId, wmHandle->now(), resultTf)) {
+        		 if( wmHandle->scene.getTransformForNode(currentNode, originId, wmHandle->now(), resultTf)) {
         			 x2 = resultTf->getRawData()[brics_3d::matrixEntry::x];
         			 y2 = resultTf->getRawData()[brics_3d::matrixEntry::y];
         		 } else {
@@ -617,7 +634,7 @@ static void osmloader_step(ubx_block_t *c) {
         	 brics_3d::rsg::Id meshId;
         	 vector<brics_3d::rsg::Attribute> meshAttributes;
         	 meshAttributes.push_back(brics_3d::rsg::Attribute("name","mesh"));
-        	 wmHandle->scene.addGeometricNode(outputHookId, meshId, meshAttributes, newMeshContainer, wmHandle->now());
+        	 wmHandle->scene.addGeometricNode(originId, meshId, meshAttributes, newMeshContainer, wmHandle->now());
 
          }
     }
