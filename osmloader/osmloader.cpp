@@ -155,7 +155,7 @@ static int osmloader_init(ubx_block_t *c)
 			convertToUtm = true;
 		} else {
 			LOG(INFO) << "osmloader: convert_to_utm turned off.";
-			convertToUtm = true;
+			convertToUtm = false;
 		}
 	}
 	LOG(DEBUG) << "osmloader: convertToUtm = " << convertToUtm;
@@ -242,6 +242,7 @@ static void osmloader_step(ubx_block_t *c) {
 	output.push_back(outputHookId); // First ID is always the output hook.
 
 
+	/* The origin */
 	brics_3d::rsg::Id originId;
 	std::vector<brics_3d::rsg::Attribute> originAttributes;
 	if(convertToUtm) {
@@ -249,7 +250,23 @@ static void osmloader_step(ubx_block_t *c) {
 	} else {
 		originAttributes.push_back(brics_3d::rsg::Attribute("gis:origin","wgs84"));
 	}
-	wmHandle->scene.addGroup(outputHookId, originId, originAttributes);
+
+	/* check if it exists already */
+	vector<brics_3d::rsg::Id> resultIds;
+	wmHandle->scene.getNodes(originAttributes, resultIds);
+	if(resultIds.size() > 0) {
+		if(resultIds.size() > 1) {
+			LOG(INFO) << "osmloader: Multiple origins found. Taking first one.";
+		}
+		originId = resultIds[0]; // We take the first one.
+		LOG(INFO) << "osmloader: Existing origin found with Id = " << originId;
+
+	} else {
+		LOG(INFO) << "osmloader: Adding a new origin node";
+		wmHandle->scene.addGroup(outputHookId, originId, originAttributes);
+	}
+
+
 
 
 	/*
@@ -633,7 +650,8 @@ static void osmloader_step(ubx_block_t *c) {
         	 LOG(DEBUG) << "Adding a mesh with "  << newMesh->getSize() << " triangles to visualize a way.";
         	 brics_3d::rsg::Id meshId;
         	 vector<brics_3d::rsg::Attribute> meshAttributes;
-        	 meshAttributes.push_back(brics_3d::rsg::Attribute("name","mesh"));
+//        	 meshAttributes.push_back(brics_3d::rsg::Attribute("name","mesh"));
+        	 meshAttributes.push_back(brics_3d::rsg::Attribute("osm:dbg","way_mesh"));
         	 wmHandle->scene.addGeometricNode(originId, meshId, meshAttributes, newMeshContainer, wmHandle->now());
 
          }
