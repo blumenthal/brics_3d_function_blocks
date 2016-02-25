@@ -477,8 +477,8 @@ static void osmloader_step(ubx_block_t *c) {
         if(convertToUtm) {
         	UTM::LLtoUTM(lon, lat, x, y, zone);
         } else {
-        	x = lon;
-        	y = lat;
+        	x = lat;
+        	y = lon;
         }
         LOG(DEBUG) << "Pose = (" << x << ", " << y << ", " << z << ") in zone: " << zone;
 
