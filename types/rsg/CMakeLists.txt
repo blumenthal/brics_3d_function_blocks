@@ -50,5 +50,5 @@ install(TARGETS rsg_types
 SET(CMAKE_CXX_FLAGS "-Wall -Werror")# -fvisibility=hidden")
 ADD_LIBRARY(world_model SHARED WorldModelLuaBinding)
 SET_TARGET_PROPERTIES(world_model PROPERTIES PREFIX "") 
-TARGET_LINK_LIBRARIES(world_model ${BRICS_3D_LIBRARIES} ${Boost_LIBRARIES})
+TARGET_LINK_LIBRARIES(world_model ${BRICS_3D_LIBRARIES} ${Boost_LIBRARIES} ${MICROBLX_LIBRARIES})
 

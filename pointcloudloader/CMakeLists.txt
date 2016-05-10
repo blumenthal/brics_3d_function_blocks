@@ -3,6 +3,7 @@ PROJECT(pointcloudloader)
 
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake_modules")
 FIND_PACKAGE(BRICS_3D REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS regex)
 FIND_PACKAGE(Microblx REQUIRED)
 FIND_PACKAGE(Eigen REQUIRED)
 FIND_PACKAGE(OpenSceneGraph COMPONENTS osgGA osgUtil osgViewer osgText)

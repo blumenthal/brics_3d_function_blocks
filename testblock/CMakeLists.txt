@@ -3,6 +3,7 @@ PROJECT(testblock)
 
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake_modules")
 FIND_PACKAGE(BRICS_3D REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS regex)
 FIND_PACKAGE(Microblx REQUIRED)
 
 # add include directories (-I)
@@ -15,6 +16,6 @@ LINK_DIRECTORIES(${BRICS_3D_LINK_DIRECTORIES})
 # compile and link the executables
 ADD_LIBRARY(testblock SHARED testblock.cpp) # -fPIC is already included
 SET_TARGET_PROPERTIES(testblock PROPERTIES PREFIX "") # should be testblock.so and not libtestblock.so ... 
-TARGET_LINK_LIBRARIES(testblock ${MICROBLX_LIBRARIES} ${BRICS_3D_LIBRARIES} )
+TARGET_LINK_LIBRARIES(testblock ${MICROBLX_LIBRARIES} ${Boost_LIBRARIES} ${BRICS_3D_LIBRARIES} )
 
 
