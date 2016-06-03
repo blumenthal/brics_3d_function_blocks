@@ -512,7 +512,8 @@ static void osmloader_step(ubx_block_t *c) {
     /* place  the camera for the visualizer, based on the last loaded node  */
     brics_3d::rsg::Id camearaId;
     vector<brics_3d::rsg::Attribute> cameraAttributes;
-    cameraAttributes.push_back(brics_3d::rsg::Attribute("osg::camera","home"));
+    cameraAttributes.push_back(brics_3d::rsg::Attribute("osg:camera","home"));
+    cameraAttributes.push_back(brics_3d::rsg::Attribute("tf:type","wgs84"));
     brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr poseOfCamera(new brics_3d::HomogeneousMatrix44(1,0,0, 0,1,0, 0,0,1, x,y,z));
     wmHandle->scene.addTransformNode(originId, camearaId, cameraAttributes, poseOfCamera, wmHandle->now());
     //output.push_back(camearaId);
@@ -615,6 +616,7 @@ static void osmloader_step(ubx_block_t *c) {
          wayCounter++;
 
         /* Add a mesh as visualization of the connection, NOTE: this is static */
+#ifdef NEVER
          if(nodeReferences.size() >= 2) {
         	 brics_3d::rsg::Id currentNode = nodeReferences[1];
         	 brics_3d::rsg::Id lastNode = nodeReferences[0];
@@ -655,6 +657,7 @@ static void osmloader_step(ubx_block_t *c) {
         	 wmHandle->scene.addGeometricNode(originId, meshId, meshAttributes, newMeshContainer, wmHandle->now());
 
          }
+#endif /*NEVER*/
     }
 
     LOG(INFO) << "osmloader: " << wayCounter <<" ways loaded.";
