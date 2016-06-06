@@ -616,7 +616,6 @@ static void osmloader_step(ubx_block_t *c) {
          wayCounter++;
 
         /* Add a mesh as visualization of the connection, NOTE: this is static */
-#ifdef NEVER
          if(nodeReferences.size() >= 2) {
         	 brics_3d::rsg::Id currentNode = nodeReferences[1];
         	 brics_3d::rsg::Id lastNode = nodeReferences[0];
@@ -646,18 +645,20 @@ static void osmloader_step(ubx_block_t *c) {
 
         		 LOG(DEBUG) << "Segment:" << x1 << ", " << y1 << ", " << x2 << ", " << y2;
         		 double yOffset = -0.1; //m
+        		 if(!convertToUtm) {
+        			 yOffset *= 0.000014; // delta in WGS 84
+        		 }
         		 newMesh->addTriangle(brics_3d::Point3D(x1,y1,0), brics_3d::Point3D(x1,y1+yOffset,0), brics_3d::Point3D(x2,y2,0) );
         	 }
 
         	 LOG(DEBUG) << "Adding a mesh with "  << newMesh->getSize() << " triangles to visualize a way.";
         	 brics_3d::rsg::Id meshId;
         	 vector<brics_3d::rsg::Attribute> meshAttributes;
-//        	 meshAttributes.push_back(brics_3d::rsg::Attribute("name","mesh"));
+        	 meshAttributes.push_back(brics_3d::rsg::Attribute("geo:crs","wgs84"));
         	 meshAttributes.push_back(brics_3d::rsg::Attribute("osm:dbg","way_mesh"));
         	 wmHandle->scene.addGeometricNode(originId, meshId, meshAttributes, newMeshContainer, wmHandle->now());
 
          }
-#endif /*NEVER*/
     }
 
     LOG(INFO) << "osmloader: " << wayCounter <<" ways loaded.";
