@@ -43,11 +43,125 @@
 /* BRICS_3D includes */
 #include <brics_3d/core/Logger.h>
 #include <brics_3d/worldModel/WorldModel.h>
+#include <brics_3d/worldModel/sceneGraph/IFunctionBlock.h>
 #include <brics_3d/worldModel/sceneGraph/DotGraphGenerator.h>
 
 #include <brics_3d/core/HomogeneousMatrix44.h> // concrete type
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
 #include <brics_3d/algorithm/filtering/BoxROIExtractor.h>
+
+/***********FBX***************/
+
+class RoiFilter: public brics_3d::rsg::IFunctionBlock {
+public:
+
+	RoiFilter(brics_3d::WorldModel* wmHandle) : brics_3d::rsg::IFunctionBlock(wmHandle) {
+		name = "roiblock";
+		Logger::setMinLoglevel(Logger::LOGDEBUG);
+		LOG(INFO) << name << ": Initializing block " << name;
+
+		/* init algorithm */
+	    this->filter = new brics_3d::BoxROIExtractor();
+	    this->center = brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr(new brics_3d::HomogeneousMatrix44());
+	    this->filter->setBoxOrigin(center);
+	};
+
+	~RoiFilter(){
+		LOG(INFO) << name << ": Stopping block " << name;
+		delete this->filter;
+	};
+
+	bool configure(brics_3d::ParameterSet parameters) {
+		LOG(INFO) << name << ": Configuring parameters.";
+		return true;
+	}
+
+	bool execute() {
+		LOG(INFO) << name << ": Executing block " << name << " with " << inputDataIds.size() << " ids as input.";
+
+		if (inputDataIds.size() < 2) {
+			LOG(ERROR) << "ROIFilter: Not enough IDs specified. Expected 2 but it is: " << inputDataIds.size();
+			return false;
+		}
+	    brics_3d::rsg::Id outputHookId = inputDataIds[0]; // First ID is always the output hook.
+
+		/* prepare input (retrieve a proper point cloud) */
+	    brics_3d::rsg::Shape::ShapePtr inputShape;
+	    brics_3d::rsg::TimeStamp inputTime;
+	    brics_3d::rsg::Id pointCloudId = inputDataIds[1];
+	    wm->scene.getGeometry(pointCloudId, inputShape, inputTime);// retrieve a point cloud
+	    brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>::PointCloudPtr inputPointCloudContainer(new brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>());
+	    inputPointCloudContainer = boost::dynamic_pointer_cast<brics_3d::rsg::PointCloud<brics_3d::PointCloud3D> >(inputShape);
+
+	    if(inputPointCloudContainer == 0) {
+	            LOG(ERROR) << "ROIFilter: Input data at input data Id does not contain a point cloud.";
+	            return false;
+	    }
+
+
+		/* get and set config data */
+		min_x = -0.5;// *((double*) ubx_config_get_data_ptr(c, "min_x", &clen));
+		max_x = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_x", &clen));
+		min_y = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_y", &clen));
+		max_y = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_y", &clen));
+		min_z = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_z", &clen));
+		max_z = 0.5;//*((double*) ubx_config_get_data_ptr(c, "max_z", &clen));
+
+	    filter->setSizeX(fabs(min_x)); // set new dimensions
+	    filter->setSizeY(fabs(min_y));
+	    filter->setSizeZ(fabs(min_z));
+	    double* transformMatrix = center->setRawData(); // set new center
+	    transformMatrix[12] = max_x - ((max_x-min_x)/2.0);
+	    transformMatrix[13] = max_y - ((max_y-min_y)/2.0);
+	    transformMatrix[14] = max_z - ((max_z-min_z)/2.0);
+
+	    /* define where to store results */
+		brics_3d::PointCloud3D::PointCloud3DPtr outputPointCloud(new brics_3d::PointCloud3D());
+		brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>::PointCloudPtr outputPointCloudContainer(new brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>());
+		outputPointCloudContainer->data = outputPointCloud;
+
+		/* do computation */
+		LOG(INFO) << "ROIFilter: Computing for input with " << inputPointCloudContainer->data->getSize() << " points.";
+	    filter->filter(inputPointCloudContainer->data.get(), outputPointCloudContainer->data.get());
+	    LOG(INFO) << "ROIFilter: Computing done with output of " << outputPointCloudContainer->data->getSize() << " points.";
+
+		/* prepare output */
+	    brics_3d::rsg::Id roiPointCloudId = 21;
+	    std::vector<brics_3d::rsg::Attribute> attributes;
+	    attributes.clear();
+	    attributes.push_back(brics_3d::rsg::Attribute("name","roi_point_cloud"));
+	    attributes.push_back(brics_3d::rsg::Attribute("origin","roifilter"));
+		wm->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wm->now());
+
+		/* store what we did to the world model in the output vector */
+		this->outputDataIds.clear();
+		this->outputDataIds.push_back(outputHookId); // We feed forward the output hook as first ID.
+		this->outputDataIds.push_back(roiPointCloudId); // This is what we added.
+
+		return true;
+	}
+
+private:
+	std::string name;
+
+	/* Algorithm(s) */
+	brics_3d::BoxROIExtractor* filter;
+	brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr center;
+
+	/* Parameters */
+	double min_x;
+	double max_x;
+	double min_y;
+	double max_y;
+	double min_z;
+	double max_z;
+};
+
+/* Mandatory macros. They define the symbols in this shared library. */
+FUNCTION_BLOCK_CREATE(RoiFilter)
+FUNCTION_BLOCK_DESTROY
+
+/***********UBX***************/
 
 UBX_MODULE_LICENSE_SPDX(BSD-3-Clause)
 
@@ -59,6 +173,7 @@ brics_3d::rsg::DotGraphGenerator* wmPrinter = 0;
 
 brics_3d::BoxROIExtractor* filter = 0;
 brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr center;
+RoiFilter* roifilter;
 
 double min_x;
 double max_x;
@@ -113,7 +228,6 @@ static int roifilter_init(ubx_block_t *c)
 	LOG(INFO) << "ROIFilter: initializing: " << c->name;
 	brics_3d::Logger::setMinLoglevel(brics_3d::Logger::LOGDEBUG);
 
-	//wmHandle = brics_3d::WorldModel::microBlxWmHandle;
 	unsigned int clen;
 	rsg_wm_handle tmpWmHandle =  *((rsg_wm_handle*) ubx_config_get_data_ptr(c, "wm_handle", &clen));
 	assert(clen != 0);
@@ -125,9 +239,11 @@ static int roifilter_init(ubx_block_t *c)
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
 
 	/* init algorithm */
-    filter = new brics_3d::BoxROIExtractor();
-    center = brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr(new brics_3d::HomogeneousMatrix44());
-    filter->setBoxOrigin(center);
+//    filter = new brics_3d::BoxROIExtractor();
+//    center = brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr(new brics_3d::HomogeneousMatrix44());
+//    filter->setBoxOrigin(center);
+    roifilter = new RoiFilter(wmHandle);
+
 
 	return 0;
 }
@@ -144,7 +260,7 @@ static void roifilter_cleanup(ubx_block_t *c)
 		filter = 0;
 	}
 	if (filter != 0) {
-		delete filter;
+		delete roifilter;
 		filter = 0;
 	}
 
@@ -178,6 +294,12 @@ static void roifilter_step(ubx_block_t *c) {
 	}
 
 	brics_3d::rsg::UbxTypecaster::convertIdsFromUbx(recievedInputDataIs, inputDataIds);
+	roifilter->setData(inputDataIds);
+	roifilter->execute();
+	std::vector<brics_3d::rsg::Id> output;
+	roifilter->getData(output);
+
+#ifdef NEVER
 	if (inputDataIds.size() < 2) {
 		LOG(ERROR) << "ROIFilter: Not enough IDs specified. Expected 2 but it is: " << inputDataIds.size();
 		return;
@@ -245,6 +367,8 @@ static void roifilter_step(ubx_block_t *c) {
 	output.clear();
 	output.push_back(outputHookId); // We feed forward the output hook as first ID.
 	output.push_back(roiPointCloudId); // This is what we added.
+#endif
+
 
 	/* push output to microblx */
 	ubx_port_t* outputPort = ubx_port_get(c, "outputDataIds");
@@ -285,3 +409,4 @@ static void roifilter_cleanup(ubx_node_info_t *ni)
 
 UBX_MODULE_INIT(roifilter_init)
 UBX_MODULE_CLEANUP(roifilter_cleanup)
+
