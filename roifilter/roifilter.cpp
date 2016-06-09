@@ -60,6 +60,14 @@ public:
 		Logger::setMinLoglevel(Logger::LOGDEBUG);
 		LOG(INFO) << name << ": Initializing block " << name;
 
+		/* get and set config data */
+		min_x = -0.5;
+		max_x = 0.1;
+		min_y = -0.5;
+		max_y = 0.1;
+		min_z = -0.5;
+		max_z = 0.5;
+
 		/* init algorithm */
 	    this->filter = new brics_3d::BoxROIExtractor();
 	    this->center = brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr(new brics_3d::HomogeneousMatrix44());
@@ -76,7 +84,7 @@ public:
 		return true;
 	}
 
-	bool execute() {
+	bool execute(std::vector<brics_3d::rsg::Id>& inputDataIds, std::vector<brics_3d::rsg::Id>& outputDataIds) {
 		LOG(INFO) << name << ": Executing block " << name << " with " << inputDataIds.size() << " ids as input.";
 
 		if (inputDataIds.size() < 2) {
@@ -98,14 +106,6 @@ public:
 	            return false;
 	    }
 
-
-		/* get and set config data */
-		min_x = -0.5;// *((double*) ubx_config_get_data_ptr(c, "min_x", &clen));
-		max_x = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_x", &clen));
-		min_y = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_y", &clen));
-		max_y = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_y", &clen));
-		min_z = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_z", &clen));
-		max_z = 0.5;//*((double*) ubx_config_get_data_ptr(c, "max_z", &clen));
 
 	    filter->setSizeX(fabs(min_x)); // set new dimensions
 	    filter->setSizeY(fabs(min_y));
@@ -134,11 +134,16 @@ public:
 		wm->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wm->now());
 
 		/* store what we did to the world model in the output vector */
-		this->outputDataIds.clear();
-		this->outputDataIds.push_back(outputHookId); // We feed forward the output hook as first ID.
-		this->outputDataIds.push_back(roiPointCloudId); // This is what we added.
+		outputDataIds.clear();
+		outputDataIds.push_back(outputHookId); // We feed forward the output hook as first ID.
+		outputDataIds.push_back(roiPointCloudId); // This is what we added.
 
 		return true;
+	}
+
+	bool execute(std::string inputModel, std::string& outputModel) {
+		LOG(ERROR) << "ROIFilter: model based io not supported.";
+		return false;
 	}
 
 private:
@@ -294,10 +299,8 @@ static void roifilter_step(ubx_block_t *c) {
 	}
 
 	brics_3d::rsg::UbxTypecaster::convertIdsFromUbx(recievedInputDataIs, inputDataIds);
-	roifilter->setData(inputDataIds);
-	roifilter->execute();
 	std::vector<brics_3d::rsg::Id> output;
-	roifilter->getData(output);
+	roifilter->execute(inputDataIds, output);
 
 #ifdef NEVER
 	if (inputDataIds.size() < 2) {
