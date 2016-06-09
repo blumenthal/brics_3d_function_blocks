@@ -143,7 +143,7 @@ public:
 
 	bool execute(std::string inputModel, std::string& outputModel) {
 		LOG(ERROR) << "ROIFilter: model based io not supported.";
-		outputModel = "{\"error\": { \"message\": \"Model based io not supported.\" \"}\"}";
+		outputModel = "{\"error\": { \"message\": \"Model based io not supported.\"}}";
 		return false;
 	}
 
