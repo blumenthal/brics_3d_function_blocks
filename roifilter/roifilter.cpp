@@ -50,6 +50,11 @@
 #include <brics_3d/core/PointCloud3D.h>		// concrete type
 #include <brics_3d/algorithm/filtering/BoxROIExtractor.h>
 
+//#define JSON_ENABLE
+#ifdef JSON_ENABLE
+#include <brics_3d/util/JSONTypecaster.h>
+#endif /* JSON_ENABLE */
+
 /***********FBX***************/
 
 class RoiFilter: public brics_3d::rsg::IFunctionBlock {
@@ -142,9 +147,48 @@ public:
 	}
 
 	bool execute(std::string inputModel, std::string& outputModel) {
+#ifdef JSON_ENABLE
+		outputModel = "{}";
+		libvariant::Variant inputModelAsJSON;
+		libvariant::Variant outputModelAsJSON;
+		brics_3d::rsg::JSONTypecaster::stringToJSON(inputModel, inputModelAsJSON);
+
+		/* validate */
+
+		/* get data */
+		brics_3d::rsg::Id outputHookId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "outputHookId");
+		brics_3d::rsg::Id pointCloudId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "pointCloudId");
+		std::vector<brics_3d::rsg::Id> inputDataIds;
+		inputDataIds.clear();
+		inputDataIds.push_back(outputHookId);
+		inputDataIds.push_back(pointCloudId);
+
+		std::vector<brics_3d::rsg::Id> outputDataIds;
+		outputDataIds.clear();
+
+		/* execute it*/
+		bool result = execute(inputDataIds, outputDataIds);
+
+		/* prepare output */
+		if(result && outputDataIds.size() == 2) {
+			outputModelAsJSON.Set("metamodel", libvariant::Variant("fbx-roifilter-output-schema.json"));
+			brics_3d::rsg::JSONTypecaster::addIdToJSON(outputDataIds[0], outputModelAsJSON, "outputHook");
+			brics_3d::rsg::JSONTypecaster::addIdToJSON(outputDataIds[1], outputModelAsJSON, "roiPointCloudId");
+			brics_3d::rsg::JSONTypecaster::JSONtoString(outputModelAsJSON, outputModel);
+		}
+
+		return result;
+#else
+
 		LOG(ERROR) << "ROIFilter: model based io not supported.";
 		outputModel = "{\"error\": { \"message\": \"Model based io not supported.\"}}";
+//	    "output": {
+//	      "metamodel": "fbx-roifilter-output-schema.json",
+//	      "outputHookId": "...",
+//	      "roiPointCloudId": "..."
+//	    }
 		return false;
+#endif
 	}
 
 	bool getMetaModel(std::string& inputMetaModel, std::string& outputMetaModel) {
