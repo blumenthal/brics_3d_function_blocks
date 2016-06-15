@@ -171,7 +171,9 @@ public:
 			libvariant::SchemaResult result = libvariant::SchemaValidate(schema, data, &loader);
 			if (result.Error()) {
 				LOG(ERROR) << "ROIFilter: Model validation failed: " << result;
-				outputModel = result.PrettyPrintMessage();
+				std::stringstream errorModel("");
+				errorModel << "{\"error\": {\"message\": \" " << result.PrettyPrintMessage() <<"\"}}";
+				outputModel =  errorModel.str();
 				return false;
 			}
 		}
