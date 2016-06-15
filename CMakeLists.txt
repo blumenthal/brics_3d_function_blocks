@@ -17,7 +17,7 @@ set(INSTALL_LIB_TYPES_DIR lib/ubx/types CACHE PATH "Installation directory for t
 set(INSTALL_LIB_BLOCKS_DIR lib/ubx/blocks CACHE PATH "Installation directory for blocks libraries")
 set(INSTALL_INCLUDE_DIR include/ubx CACHE PATH "Installation directory for header files (types)")
 set(INSTALL_CMAKE_DIR  share/ubx/cmake CACHE PATH  "Installation directory for CMake files") # default ${DEF_INSTALL_CMAKE_DIR}
-
+ADD_DEFINITIONS(-DFBX_MODELS_DIR="${CMAKE_HOME_DIRECTORY}/models") # folder for models (schemas)
 
 OPTION(USE_OSG "Enable Open Scene Graph" OFF) #there are still some issues with the clang compiler
 OPTION(USE_FBX "Enable Function Blocks" OFF) # to avoid be abele to break cyclic dependencies.

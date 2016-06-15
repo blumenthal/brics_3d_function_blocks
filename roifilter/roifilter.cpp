@@ -53,6 +53,9 @@
 //#define JSON_ENABLE
 #ifdef JSON_ENABLE
 #include <brics_3d/util/JSONTypecaster.h>
+#include <Variant/Schema.h>
+#include <Variant/SchemaLoader.h>
+#include <Variant/Extensions.h>
 #endif /* JSON_ENABLE */
 
 /***********FBX***************/
@@ -77,6 +80,11 @@ public:
 	    this->filter = new brics_3d::BoxROIExtractor();
 	    this->center = brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr(new brics_3d::HomogeneousMatrix44());
 	    this->filter->setBoxOrigin(center);
+
+	    /* get default location of model schemas */
+	    char defaultFilename[255] = { FBX_MODELS_DIR };
+	    modelsDefaultPath = defaultFilename;
+	    LOG(DEBUG) << name << ": models default path = " << modelsDefaultPath;
 	};
 
 	~RoiFilter(){
@@ -154,6 +162,19 @@ public:
 		brics_3d::rsg::JSONTypecaster::stringToJSON(inputModel, inputModelAsJSON);
 
 		/* validate */
+		bool enableValidation = true;
+		if (enableValidation) {
+			libvariant::Variant data = inputModelAsJSON;
+			libvariant::Variant schema = libvariant::Variant("fbx-roifilter-input-schema.json");
+			libvariant::AdvSchemaLoader loader;
+			loader.AddPath(modelsDefaultPath);
+			libvariant::SchemaResult result = libvariant::SchemaValidate(schema, data, &loader);
+			if (result.Error()) {
+				LOG(ERROR) << "ROIFilter: Model validation failed: " << result;
+				outputModel = result.PrettyPrintMessage();
+				return false;
+			}
+		}
 
 		/* get data */
 		brics_3d::rsg::Id outputHookId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "outputHookId");
@@ -199,6 +220,7 @@ public:
 
 private:
 	std::string name;
+	std::string modelsDefaultPath;
 
 	/* Algorithm(s) */
 	brics_3d::BoxROIExtractor* filter;
