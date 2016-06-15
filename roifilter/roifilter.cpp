@@ -31,6 +31,7 @@
 
 /* std includes */
 #include <iostream>
+#include <fstream>
 #include <cstring>
 
 /* microblx includes */
@@ -64,7 +65,10 @@ class RoiFilter: public brics_3d::rsg::IFunctionBlock {
 public:
 
 	RoiFilter(brics_3d::WorldModel* wmHandle) : brics_3d::rsg::IFunctionBlock(wmHandle) {
-		name = "roiblock";
+		name = "roifilter";
+		inputMetaModelFile = "fbx-" + name + "-input-schema.json";
+		outputMetaModelFile= "fbx-" + name + "-output-schema.json";
+
 		Logger::setMinLoglevel(Logger::LOGDEBUG);
 		LOG(INFO) << name << ": Initializing block " << name;
 
@@ -94,6 +98,33 @@ public:
 
 	bool configure(brics_3d::ParameterSet parameters) {
 		LOG(INFO) << name << ": Configuring parameters.";
+		double value = -1.0;
+
+		if(parameters.hasDouble("min_x", value)) {
+			min_x = value;
+			LOG(INFO) << name << ": \t <double> parameter min_x set to = " << min_x;
+		}
+		if(parameters.hasDouble("max_x", value)) {
+			max_x = value;
+			LOG(INFO) << name << ": \t <double> parameter max_x set to = " << max_x;
+		}
+		if(parameters.hasDouble("min_y", value)) {
+			min_y = value;
+			LOG(INFO) << name << ": \t <double> parameter min_y set to = " << min_y;
+		}
+		if(parameters.hasDouble("max_y", value)) {
+			max_y = value;
+			LOG(INFO) << name << ": \t <double> parameter max_y set to = " << max_y;
+		}
+		if(parameters.hasDouble("min_z", value)) {
+			min_z = value;
+			LOG(INFO) << name << ": \t <double> parameter min_z set to = " << min_z;
+		}
+		if(parameters.hasDouble("max_z", value)) {
+			max_z = value;
+			LOG(INFO) << name << ": \t <double> parameter max_z set to = " << max_z;
+		}
+
 		return true;
 	}
 
@@ -143,7 +174,7 @@ public:
 	    std::vector<brics_3d::rsg::Attribute> attributes;
 	    attributes.clear();
 	    attributes.push_back(brics_3d::rsg::Attribute("name","roi_point_cloud"));
-	    attributes.push_back(brics_3d::rsg::Attribute("origin","roifilter"));
+	    attributes.push_back(brics_3d::rsg::Attribute("origin", name));
 		wm->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wm->now());
 
 		/* store what we did to the world model in the output vector */
@@ -165,7 +196,7 @@ public:
 		bool enableValidation = true;
 		if (enableValidation) {
 			libvariant::Variant data = inputModelAsJSON;
-			libvariant::Variant schema = libvariant::Variant("fbx-roifilter-input-schema.json");
+			libvariant::Variant schema = libvariant::Variant(inputMetaModelFile);
 			libvariant::AdvSchemaLoader loader;
 			loader.AddPath(modelsDefaultPath);
 			libvariant::SchemaResult result = libvariant::SchemaValidate(schema, data, &loader);
@@ -194,7 +225,7 @@ public:
 
 		/* prepare output */
 		if(result && outputDataIds.size() == 2) {
-			outputModelAsJSON.Set("metamodel", libvariant::Variant("fbx-roifilter-output-schema.json"));
+			outputModelAsJSON.Set("metamodel", libvariant::Variant(outputMetaModelFile));
 			brics_3d::rsg::JSONTypecaster::addIdToJSON(outputDataIds[0], outputModelAsJSON, "outputHook");
 			brics_3d::rsg::JSONTypecaster::addIdToJSON(outputDataIds[1], outputModelAsJSON, "roiPointCloudId");
 			brics_3d::rsg::JSONTypecaster::JSONtoString(outputModelAsJSON, outputModel);
@@ -202,27 +233,37 @@ public:
 
 		return result;
 #else
-
 		LOG(ERROR) << "ROIFilter: model based io not supported.";
 		outputModel = "{\"error\": { \"message\": \"Model based io not supported.\"}}";
-//	    "output": {
-//	      "metamodel": "fbx-roifilter-output-schema.json",
-//	      "outputHookId": "...",
-//	      "roiPointCloudId": "..."
-//	    }
 		return false;
 #endif
 	}
 
 	bool getMetaModel(std::string& inputMetaModel, std::string& outputMetaModel) {
-		inputMetaModel = "{}";
-		outputMetaModel = "{}";
-		return false;
+		std::stringstream buffer;
+
+		std::string file = modelsDefaultPath + "/" + inputMetaModelFile;
+		std::ifstream inputMetaModelFileStream(file.c_str());
+		buffer.str("");
+		buffer << inputMetaModelFileStream.rdbuf();
+		inputMetaModel = buffer.str();
+
+		file = modelsDefaultPath + "/" + outputMetaModelFile;
+		std::ifstream outputMetaModelFileStream(file.c_str());
+		buffer.str("");
+		buffer << outputMetaModelFileStream.rdbuf();
+		outputMetaModel = buffer.str();
+
+		return true;
 	}
 
 private:
+
+	/* Meta data */
 	std::string name;
 	std::string modelsDefaultPath;
+	std::string inputMetaModelFile;
+	std::string outputMetaModelFile;
 
 	/* Algorithm(s) */
 	brics_3d::BoxROIExtractor* filter;
@@ -319,11 +360,7 @@ static int roifilter_init(ubx_block_t *c)
 	wmPrinter = new brics_3d::rsg::DotGraphGenerator();
 
 	/* init algorithm */
-//    filter = new brics_3d::BoxROIExtractor();
-//    center = brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr(new brics_3d::HomogeneousMatrix44());
-//    filter->setBoxOrigin(center);
     roifilter = new RoiFilter(wmHandle);
-
 
 	return 0;
 }
@@ -376,77 +413,6 @@ static void roifilter_step(ubx_block_t *c) {
 	brics_3d::rsg::UbxTypecaster::convertIdsFromUbx(recievedInputDataIs, inputDataIds);
 	std::vector<brics_3d::rsg::Id> output;
 	roifilter->execute(inputDataIds, output);
-
-#ifdef NEVER
-	if (inputDataIds.size() < 2) {
-		LOG(ERROR) << "ROIFilter: Not enough IDs specified. Expected 2 but it is: " << inputDataIds.size();
-		return;
-	}
-    brics_3d::rsg::Id outputHookId = inputDataIds[0]; // First ID is always the output hook.
-
-	/* prepare input (retrieve a proper point cloud) */
-    brics_3d::rsg::Shape::ShapePtr inputShape;
-    brics_3d::rsg::TimeStamp inputTime;
-    brics_3d::rsg::Id pointCloudId = inputDataIds[1];
-    wmHandle->scene.getGeometry(pointCloudId, inputShape, inputTime);// retrieve a point cloud
-    brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>::PointCloudPtr inputPointCloudContainer(new brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>());
-    inputPointCloudContainer = boost::dynamic_pointer_cast<brics_3d::rsg::PointCloud<brics_3d::PointCloud3D> >(inputShape);
-
-    if(inputPointCloudContainer == 0) {
-            LOG(ERROR) << "ROIFilter: Input data at input data Id does not contain a point cloud.";
-            return;
-    }
-
-
-	/* get and set config data */
-//	unsigned int clen;
-	min_x = -0.5;// *((double*) ubx_config_get_data_ptr(c, "min_x", &clen));
-	max_x = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_x", &clen));
-	min_y = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_y", &clen));
-	max_y = 0.1;//*((double*) ubx_config_get_data_ptr(c, "max_y", &clen));
-	min_z = -0.5;//*((double*) ubx_config_get_data_ptr(c, "min_z", &clen));
-	max_z = 0.5;//*((double*) ubx_config_get_data_ptr(c, "max_z", &clen));
-
-    filter->setSizeX(fabs(min_x)); // set new dimensions
-    filter->setSizeY(fabs(min_y));
-    filter->setSizeZ(fabs(min_z));
-    double* transformMatrix = center->setRawData(); // set new center
-    transformMatrix[12] = max_x - ((max_x-min_x)/2.0);
-    transformMatrix[13] = max_y - ((max_y-min_y)/2.0);
-    transformMatrix[14] = max_z - ((max_z-min_z)/2.0);
-
-    /* define where to store results */
-	brics_3d::PointCloud3D::PointCloud3DPtr outputPointCloud(new brics_3d::PointCloud3D());
-	brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>::PointCloudPtr outputPointCloudContainer(new brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>());
-	outputPointCloudContainer->data = outputPointCloud;
-
-	/* do computation */
-	LOG(INFO) << "ROIFilter: Computing for input with " << inputPointCloudContainer->data->getSize() << " points.";
-    filter->filter(inputPointCloudContainer->data.get(), outputPointCloudContainer->data.get());
-    LOG(INFO) << "ROIFilter: Computing done with output of " << outputPointCloudContainer->data->getSize() << " points.";
-
-	/* prepare output */
-    brics_3d::rsg::Id roiPointCloudId = 21;
-    std::vector<brics_3d::rsg::Attribute> attributes;
-    attributes.clear();
-    attributes.push_back(brics_3d::rsg::Attribute("name","roi_point_cloud"));
-    attributes.push_back(brics_3d::rsg::Attribute("origin","roifilter"));
-	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, outputPointCloudContainer, wmHandle->now());
-
-//	brics_3d::rsg::Box::BoxPtr someBox(new brics_3d::rsg::Box(2, 3, 4));
-//    attributes.clear();
-//    attributes.push_back(brics_3d::rsg::Attribute("name","some_box"));
-//	wmHandle->scene.addGeometricNode(outputHookId, roiPointCloudId, attributes, someBox, wmHandle->now(), true);
-
-
-
-	/* store what we did to the world model in the output vector */
-	std::vector<brics_3d::rsg::Id> output;
-	output.clear();
-	output.push_back(outputHookId); // We feed forward the output hook as first ID.
-	output.push_back(roiPointCloudId); // This is what we added.
-#endif
-
 
 	/* push output to microblx */
 	ubx_port_t* outputPort = ubx_port_get(c, "outputDataIds");
