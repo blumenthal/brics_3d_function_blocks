@@ -1,0 +1,25 @@
+{    
+  "id": "fbx-roifilter-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "Region of Interest Point Cloud Filter",
+  "description": "Input data model for roifilter function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-roifilter-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "outputHookId": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Parent node to which the new filtered data is added to."
+     },
+    "pointCloudId": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Point cloud to be filtered."
+    }
+  },
+  
+  "required": [ "metamodel", "outputHookId", "pointCloudId"],
+  "additionalProperties": false
+}
