@@ -1,0 +1,10 @@
+{    
+  "id": "rsg-id-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "Id",
+  "description": "A globally unique id (UUID) for elements of the Robot Scene Graph. Complies to RFC 4122.",
+  "type": "string",
+  "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+  "format": "uuid",
+  "additionalProperties": false
+}

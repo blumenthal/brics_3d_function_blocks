@@ -192,19 +192,11 @@ public:
 		libvariant::Variant outputModelAsJSON;
 		brics_3d::rsg::JSONTypecaster::stringToJSON(inputModel, inputModelAsJSON);
 
-		/* validate */
+		/* validate input */
 		bool enableValidation = true;
 		if (enableValidation) {
-			libvariant::Variant data = inputModelAsJSON;
-			libvariant::Variant schema = libvariant::Variant(inputMetaModelFile);
-			libvariant::AdvSchemaLoader loader;
-			loader.AddPath(modelsDefaultPath);
-			libvariant::SchemaResult result = libvariant::SchemaValidate(schema, data, &loader);
-			if (result.Error()) {
-				LOG(ERROR) << "ROIFilter: Model validation failed: " << result;
-				std::stringstream errorModel("");
-				errorModel << "{\"error\": {\"message\": \" " << result.PrettyPrintMessage() <<"\"}}";
-				outputModel =  errorModel.str();
+			if(!brics_3d::rsg::JSONTypecaster::validateFunctionBlockModel(inputModelAsJSON, inputMetaModelFile, modelsDefaultPath, outputModel)) {
+				LOG(ERROR) << "ROIFilter: Model validation for input model failed: " << outputModel;
 				return false;
 			}
 		}
@@ -229,6 +221,14 @@ public:
 			brics_3d::rsg::JSONTypecaster::addIdToJSON(outputDataIds[0], outputModelAsJSON, "outputHook");
 			brics_3d::rsg::JSONTypecaster::addIdToJSON(outputDataIds[1], outputModelAsJSON, "roiPointCloudId");
 			brics_3d::rsg::JSONTypecaster::JSONtoString(outputModelAsJSON, outputModel);
+
+			/* validate output */
+			if (enableValidation) {
+				if(!brics_3d::rsg::JSONTypecaster::validateFunctionBlockModel(outputModelAsJSON, outputMetaModelFile, modelsDefaultPath, outputModel)) {
+					LOG(ERROR) << "ROIFilter: Model validation for output model failed: " << outputModel;
+					return false;
+				}
+			}
 		}
 
 		return result;

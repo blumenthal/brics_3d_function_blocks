@@ -22,4 +22,5 @@
   
   "required": [ "metamodel", "outputHookId", "roiPointCloudId"],
   "additionalProperties": false
+
 }
