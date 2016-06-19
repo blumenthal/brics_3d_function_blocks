@@ -1,0 +1,25 @@
+{    
+  "id": "fbx-posehistory-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to retreive the history of poses between two nodes in the scene graph.",
+  "description": "Input data model for posehistory query function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-posehistory-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "id": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Id of the node that shall be queried."
+     },
+    "idReferenceNode": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Id of the origin. The resulting data is rexplessed in the origin of this node. For most queries this will a node with a tag: gis:origin."
+    }
+  },
+  
+  "required": [ "metamodel", "id", "idReferenceNode"],
+  "additionalProperties": false
+}
