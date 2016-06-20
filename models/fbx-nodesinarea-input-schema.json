@@ -1,0 +1,33 @@
+{    
+  "id": "fbx-nodesinarea-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to retreive the history of poses between two nodes in the scene graph.",
+  "description": "Input data model for nodesinarea query function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-nodesinarea-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "areaId": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Id of the Connection to represent an area."
+    },
+    "attributes": { "$ref": "#/definitions/attributes" }   
+  },
+  
+  "required": [ "metamodel", "areaId"],
+  "additionalProperties": false,
+
+  "definitions": {
+    
+    "attributes": { 
+      "type": "array",
+      "items": [
+        { "$ref": "rsg-attribute-schema.json" }
+      ]
+    }
+  } 
+    
+}

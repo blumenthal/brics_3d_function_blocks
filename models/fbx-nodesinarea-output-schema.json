@@ -1,0 +1,29 @@
+{    
+  "id": "fbx-nodesinarea-output-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to retreive the history of poses between two nodes in the scene graph.",
+  "description": "Output data model for nodesinarea query function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-nodesinarea-output-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+   	
+   "ids": { "$ref": "#/definitions/ids" }
+
+  },
+  
+  "required": [ "metamodel", "ids"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "ids": { 
+      "type": "array",
+      "items": [
+         { "$ref": "rsg-id-schema.json" }
+      ]
+    }
+  }	
+}
