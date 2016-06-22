@@ -201,9 +201,10 @@ private:
 		}
 		LOG(DEBUG) << name << "::isInArea: polygon has: " << polygonPoints.size() << " points.";
 
+		LOG(DEBUG) << name << "::isInArea: testing node: (" << x << ", " << y << ")";
 		isInArea = pointInPolygon(polygonPoints, x, y);
 		if(isInArea) {
-			LOG(DEBUG) << name << "::isInArea: polygon has: " << polygonPoints.size() << " points.";
+			LOG(DEBUG) << name << "::isInArea: node (" << x << ", " << y << ") is within polygon";
 		}
 
 		return isInArea;
@@ -241,11 +242,14 @@ private:
 //	    j=i; }
 
 	  for (i=0; i<polygonPoints.size(); i++) {
-	    if (((polygonPoints[i].getX()<y) && (polygonPoints[j].getY())>=y)
-	    ||  ((polygonPoints[j].getY()<y) && (polygonPoints[i].getY()>=y))) {
-	      if (polygonPoints[i].getX()+(y-polygonPoints[i].getY())/(polygonPoints[j].getY()-polygonPoints[i].getY())*(polygonPoints[j].getX()-polygonPoints[i].getX())<x) {
-	        oddNodes=!oddNodes; }}
-	    j=i; }
+		  if (((polygonPoints[i].getY()<y) && (polygonPoints[j].getY())>=y)
+				  ||  ((polygonPoints[j].getY()<y) && (polygonPoints[i].getY()>=y))) {
+			  if (polygonPoints[i].getX()+(y-polygonPoints[i].getY())/(polygonPoints[j].getY()-polygonPoints[i].getY())*(polygonPoints[j].getX()-polygonPoints[i].getX())<x) {
+				  oddNodes=!oddNodes;
+			  }
+		  }
+		  j=i;
+	  }
 
 	  return oddNodes;
 	}
