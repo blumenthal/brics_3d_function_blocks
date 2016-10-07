@@ -1,0 +1,22 @@
+{    
+  "id": "fbx-osgvizualizer-output-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A function block to visualize the RSG via Open Scene Graph",
+  "description": "Output data model for osgvizualizer function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-osgvizualizer-output-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+   	"status": { 
+    	"enum": [ "STARTED, STOPPED, ERROR"],
+    	"description": "Returns the current status of the sisualization: STARTED, STOPPED or ERROR." 
+   	},  
+  },
+  
+  "required": [ "metamodel", "status"],
+  "additionalProperties": false,
+
+}

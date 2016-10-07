@@ -31,6 +31,7 @@ IF(USE_FBX)
     ADD_SUBDIRECTORY(./octreefilter)
     IF(USE_OSG)
         ADD_SUBDIRECTORY(./pointcloudloader)
+        #ADD_SUBDIRECTORY(./osgvisualizer) # != clang++
     ENDIF(USE_OSG)
     ADD_SUBDIRECTORY(./osmloader)
 ENDIF(USE_FBX)

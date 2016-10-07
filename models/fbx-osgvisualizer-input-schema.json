@@ -1,0 +1,22 @@
+{    
+  "id": "fbx-osgvisualizer-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A function block to visualize the RSG via Open Scene Graph",
+  "description": "Input data model for osgvisualizer function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-osgvisualizer-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "command": { 
+    	"enum": [ "START, STOP"],
+    	"description": "START or STOP the visualization" 
+   	},  
+  },
+  
+  "required": [ "metamodel", "command"],
+  "additionalProperties": false
+  
+}
