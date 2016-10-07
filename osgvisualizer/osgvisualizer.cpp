@@ -55,8 +55,8 @@ public:
 		/* init algorithm */
 		visualizer = new brics_3d::rsg::OSGVisualizer();
 
-		osgConfiguration.visualizeIds = false;
-		osgConfiguration.visualizeAttributes = false;
+		osgConfiguration.visualizeIds = true;
+		osgConfiguration.visualizeAttributes = true;
 		visualizer->setConfig(osgConfiguration);
 		wm->scene.attachUpdateObserver(visualizer); //enable visualization
 		wm->scene.advertiseRootNode(); // Don't forget this one! Otherwise the observers cannot correctly handle the updates.

@@ -13,7 +13,7 @@
     "command": { 
     	"enum": [ "START, STOP"],
     	"description": "START or STOP the visualization" 
-   	},  
+   	}  
   },
   
   "required": [ "metamodel", "command"],

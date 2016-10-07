@@ -13,7 +13,7 @@
    	"status": { 
     	"enum": [ "STARTED, STOPPED, ERROR"],
     	"description": "Returns the current status of the sisualization: STARTED, STOPPED or ERROR." 
-   	},  
+   	}  
   },
   
   "required": [ "metamodel", "status"],
