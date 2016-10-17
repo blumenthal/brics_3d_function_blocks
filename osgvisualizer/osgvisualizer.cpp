@@ -34,6 +34,8 @@
 #include <brics_3d/worldModel/WorldModel.h>
 #include <brics_3d/worldModel/sceneGraph/IFunctionBlock.h>
 #include <brics_3d/worldModel/sceneGraph/OSGVisualizer.h>
+#include <brics_3d/worldModel/sceneGraph/SceneGraphToUpdatesTraverser.h>
+#include <brics_3d/worldModel/sceneGraph/RootFinder.h>
 #include <brics_3d/util/JSONTypecaster.h>
 
 
@@ -61,15 +63,50 @@ public:
 		wm->scene.attachUpdateObserver(visualizer); //enable visualization
 		wm->scene.advertiseRootNode(); // Don't forget this one! Otherwise the observers cannot correctly handle the updates.
 
+		/* copy existing wm data to visualizer */
+		wmCopy = new brics_3d::rsg::SceneGraphToUpdatesTraverser(visualizer);
+		wmCopy->reset();
+
+		brics_3d::rsg::Id localRootId = wm->scene.getRootId();
+		/*
+		 *
+		 *             global_root
+		 *                 |
+		 *    +------------+--------- +
+		 *    |            |          |
+		 *    r1           r2      local_root
+		 *
+		 */
+		brics_3d::rsg::Id rootId = localRootId;
+		bool useGlobalRootId = true;
+		if(useGlobalRootId) { //use (potental) global id
+			brics_3d::rsg::Id globalRootId = 0;
+			brics_3d::rsg::RootFinder rootFinder;
+			wm->scene.executeGraphTraverser(&rootFinder, localRootId);
+			globalRootId = rootFinder.getRootNode();
+
+			if(!globalRootId.isNil()) {
+				rootId = globalRootId;
+			} else {
+				LOG(ERROR) << name << " Cannot obtain a global root Id. Using the local one instead.";
+			}
+
+			LOG(DEBUG) << name << " using rootId = " << rootId << ", while localRootId = " << localRootId;
+		}
+
+		wm->scene.executeGraphTraverser(wmCopy, rootId);
+
+
 	    /* get default location of model schemas */
-//	    char defaultFilename[255] = { FBX_MODELS_DIR };
-		char defaultFilename[255] = { "." };
+	    char defaultFilename[255] = { FBX_MODELS_DIR };
+//		char defaultFilename[255] = { "." };
 	    modelsDefaultPath = defaultFilename;
 	    LOG(DEBUG) << name << ": models default path = " << modelsDefaultPath;
 	};
 
 	~OsgVisualizer() {
 		wm->scene.detachUpdateObserver(visualizer);
+		delete wmCopy;
 		delete visualizer;
 		LOG(INFO) << name << ": Stopping block " << name;
 	};
@@ -108,18 +145,45 @@ public:
 		brics_3d::rsg::Id idReferenceNode = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "idReferenceNode");
 
 		/* output data */
-		brics_3d::rsg::TemporalCache<brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr> history;
 
-		/* execute query
-		 * 1.) Quick look up for direct connection
+		/* execute query */
+
+		/* copy existing wm data to visualizer */
+		wmCopy = new brics_3d::rsg::SceneGraphToUpdatesTraverser(visualizer);
+		wmCopy->reset();
+
+		brics_3d::rsg::Id localRootId = wm->scene.getRootId();
+		/*
+		 *
+		 *             global_root
+		 *                 |
+		 *    +------------+--------- +
+		 *    |            |          |
+		 *    r1           r2      local_root
+		 *
 		 */
+		brics_3d::rsg::Id rootId = localRootId;
+		bool useGlobalRootId = true;
+		if(useGlobalRootId) { //use (potental) global id
+			brics_3d::rsg::Id globalRootId = 0;
+			brics_3d::rsg::RootFinder rootFinder;
+			wm->scene.executeGraphTraverser(&rootFinder, localRootId);
+			globalRootId = rootFinder.getRootNode();
+
+			if(!globalRootId.isNil()) {
+				rootId = globalRootId;
+			} else {
+				LOG(ERROR) << name << " Cannot obtain a global root Id. Using the local one instead.";
+			}
+
+			LOG(DEBUG) << name << " using rootId = " << rootId << ", while localRootId = " << localRootId;
+		}
+
+		wm->scene.executeGraphTraverser(wmCopy, rootId);
 
 
 		/* prepare output */
 		bool result = true;
-
-
-		brics_3d::rsg::JSONTypecaster::addTransformCacheToJSON(history, outputModelAsJSON);
 
 		if(result) {
 			outputModelAsJSON.Set("metamodel", libvariant::Variant(outputMetaModelFile));
@@ -165,6 +229,8 @@ private:
 
 	/* Algorithm(s) */
 	brics_3d::rsg::OSGVisualizer* visualizer;
+	brics_3d::rsg::SceneGraphToUpdatesTraverser* wmCopy;
+
 
 	/* Parameters */
 	brics_3d::rsg::VisualizationConfiguration osgConfiguration;

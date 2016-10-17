@@ -11,7 +11,7 @@
     	"description": "Mandatory metamodel identifier." 
    	},
     "command": { 
-    	"enum": [ "START, STOP"],
+    	"enum": [ "START, "STOP"],
     	"description": "START or STOP the visualization" 
    	}  
   },

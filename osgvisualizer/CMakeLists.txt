@@ -8,6 +8,7 @@ FIND_PACKAGE(Boost COMPONENTS regex thread)
 FIND_PACKAGE(Eigen REQUIRED)
 FIND_PACKAGE(OpenSceneGraph COMPONENTS osgGA osgUtil osgViewer osgText)
 ADD_DEFINITIONS(-DEIGEN3)
+ADD_DEFINITIONS(-DFBX_MODELS_DIR="${CMAKE_HOME_DIRECTORY}/../models") # only temporary
 
 # search for LibVariant to parse JSON files
 OPTION(USE_JSON "Enable JSON Support. Requires libvariant to be installed." ON)
