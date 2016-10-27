@@ -11,7 +11,7 @@
     	"description": "Mandatory metamodel identifier." 
    	},
    	"status": { 
-    	"enum": [ "STARTED, STOPPED, ERROR"],
+    	"enum": [ "STARTED", "STOPPED", "ERROR"],
     	"description": "Returns the current status of the sisualization: STARTED, STOPPED or ERROR." 
    	}  
   },
