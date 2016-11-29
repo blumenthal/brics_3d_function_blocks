@@ -1,0 +1,36 @@
+{    
+  "id": "fbx-poselist-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to aggregate multiple pose queries into a single one, w.r.t to a single common reference and time stamp.",
+  "description": "Input data model for poselist query function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-poselist-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+    },
+    "ids": { 
+   	  "$ref": "#/definitions/ids" 
+    },
+    "idReferenceNode": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Id of the origin. The resulting data is expressed in the origin of this node. For most queries this will a node with a tag: gis:origin."
+    },
+    "timeStamp": { 
+   		"$ref": "rsg-timeStamp-schema.json" 
+    }
+  },
+  
+  "required": [ "metamodel", "ids", "idReferenceNode", "timeStamp"],
+  "additionalProperties": false,
+  
+  "definitions": {
+    "ids": { 
+      "type": "array",
+      "items": [
+         { "$ref": "rsg-id-schema.json" }
+      ]
+    }
+  }	
+}

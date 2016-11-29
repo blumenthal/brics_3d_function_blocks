@@ -1,0 +1,20 @@
+{    
+  "id": "rsg-attribute-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "Attribute",
+  "description": "A generic attribute (key) - value pair.",
+  "type": "object",
+  "properties": {
+    "type": { "enum": [ "Attribute"] },
+    "key": {
+      "type": "string",
+      "description": "The key of a pair. Please use ':' a seperete a namespace identifier."
+     },
+    "value": {
+      "type": "string",
+      "description": "The value of a pair"
+    }
+  },
+  "required": [ "key", "value"],
+  "additionalProperties": false
+}

@@ -1,0 +1,36 @@
+{    
+  "id": "fbx-posehistory-output-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to aggregate multiple pose queries into a single one, w.r.t to a single common reference and time stamp.",
+  "description": "Output data model for poselist query function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-posehistory-output-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+   "poses": { 
+      "type": "array",
+      "items": [
+        { "$ref": "#/definitions/transformCacheEntry" }
+      ],
+      "uniqueItems":true
+    }, 
+  },
+  
+  "required": [ "metamodel", "poses"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "transformCacheEntry": {
+      "type": "object",
+        "properties": {
+          "stamp": { "$ref": "rsg-timeStamp-schema.json" },
+          "transform": { "$ref": "rsg-homogeneousMatrix44-schema.json" },
+        },
+        "required": [ "stamp", "transform"],
+    }
+  }
+
+}

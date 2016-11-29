@@ -1,0 +1,33 @@
+{    
+  "id": "rsg-timeStamp-schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "TimeStamp",
+  "description": "A time stamp based on UTC.",
+  "type": "object",
+  "oneOf": [
+    {
+     "properties": {
+       "@stamptype": { "enum": [ "TimeStampUTCms"] }, 
+       "stamp": {
+          "type": "number",
+          "format": "utc-millisec ",
+          "description":  "utc-millisec This is the difference, measured in milliseconds, between the specified time and midnight, 00:00 ofJanuary 1, 1970 UTC."
+        },
+        "required": [ "@stamptype", "stamp"],
+        "additionalProperties": false
+      } 
+    },
+    {
+     "properties": {
+       "@stamptype": { "enum": [ "TimeStampDate"] }, 
+       "stamp": {
+          "type": "string",
+          "format": "date-time",
+          "description":  "A time stamp using the date-time format. An RFC3339  Section 5.6 timestamp in UTC time. This is formatted as YYYY-MM-DDThh:mm:ss.fffZ. The milliseconds portion .fff is optional."
+        },
+        "required": [ "@stamptype", "stamp"],
+        "additionalProperties": false
+      } 
+    }
+  ]
+}
