@@ -1,0 +1,43 @@
+{    
+  "id": "fbx-onattributechange-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A monitor function block that sends an event whenever a certain value of an attribute for a particular node has changed.",
+  "description": "Input data model for onattributechange query function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-onattributechange-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+    },
+    "monitorId": {
+      "$ref": "rsg-id-schema.json",
+      "description": "UUID to endentify events (replies) that belong gto this query"
+    },
+    "monitorOperation": { 
+    	"enum": [ "REGISTER", "UNREGISTER"],
+    	"description": "REGISTER or UNREGISTER a listener to this monitor" 
+   	},  
+    "id": {
+      "$ref": "rsg-id-schema.json",
+      "description": "Id of the node to be monitored."
+    },
+    "attributeKey": {
+    	"type": "string",
+      	"description": "Attribute(s) indentified by its key to be monitored."
+    }
+
+  },
+  
+  "required": [ "metamodel", "monitorOperation", "id", "attributeKey"],
+  "additionalProperties": false,
+  
+  "definitions": {
+    "ids": { 
+      "type": "array",
+      "items": [
+         { "$ref": "rsg-id-schema.json" }
+      ]
+    }
+  }	
+}

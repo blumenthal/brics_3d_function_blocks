@@ -38,6 +38,7 @@
 #include <brics_3d/worldModel/WorldModel.h>
 #include <brics_3d/worldModel/sceneGraph/IFunctionBlock.h>
 #include <brics_3d/worldModel/sceneGraph/ISceneGraphUpdateObserver.h>
+#include <brics_3d/worldModel/sceneGraph/IPort.h>
 #include <brics_3d/util/JSONTypecaster.h>
 
 using namespace brics_3d::rsg;
@@ -57,7 +58,7 @@ class OnAttributeChangeObserver: public ISceneGraphUpdateObserver {
 
 public:
 	OnAttributeChangeObserver() {
-
+		port = 0;
 	}
 
 	virtual ~OnAttributeChangeObserver() {}
@@ -106,7 +107,22 @@ public:
 						LOG(INFO) << "OnAttributeChangeObserver: Monitor with Id = " << listener.monitorId << " detected an attribute of node " << listener.nodeId << " has changed from " << listener.lastAttributeValue << " to " << *it;
 
 						/* TODO send an event to the monitor port */
+						if(port) {
 
+							libvariant::Variant result;
+							result.Set("@worldmodeltype", libvariant::Variant("RSGMonitor"));
+							brics_3d::rsg::JSONTypecaster::addIdToJSON(listener.monitorId, result, "monitorId");
+							result.Set("attributeKey", libvariant::Variant(listener.attributeKey));
+							result.Set("oldValue", libvariant::Variant(listener.lastAttributeValue));
+							result.Set("newValue", libvariant::Variant(*it));
+							string message = libvariant::Serialize(result, libvariant::SERIALIZE_JSON);
+							LOG(DEBUG) << "OnAttributeChangeObserver: Sending message: " << message;
+							int transferredBytes = 0;
+							port->write(message.c_str(), message.size(), transferredBytes);
+
+						}  else {
+							LOG(WARNING) << "OnAttributeChangeObserver: no monitir port set.";
+						}
 
 						monitorsIt->second.lastAttributeValue = *it;
 					}
@@ -142,6 +158,7 @@ public:
 	/// Look up table for all registered listeners. Identified via monitorId
     std::map<Id, ListenerSpec> listeners;
 
+    IOutputPort* port;
 };
 
 /***********FBX***************/
@@ -230,6 +247,7 @@ public:
 
 			if (monitor == 0) { // only attach on first creation
 				monitor = new OnAttributeChangeObserver();
+				monitor->port = wm->scene.getMonitorPort();
 				wm->scene.attachUpdateObserver(monitor);
 			}
 
