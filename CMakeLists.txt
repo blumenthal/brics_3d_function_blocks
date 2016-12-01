@@ -30,6 +30,7 @@ IF(USE_FBX)
     ADD_SUBDIRECTORY(./poselist)
     ADD_SUBDIRECTORY(./nodesinarea)
     ADD_SUBDIRECTORY(./octreefilter)
+    ADD_SUBDIRECTORY(./onattributechange)
     IF(USE_OSG)
         ADD_SUBDIRECTORY(./pointcloudloader)
         #ADD_SUBDIRECTORY(./osgvisualizer) # != clang++
