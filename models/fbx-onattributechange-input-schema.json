@@ -5,33 +5,54 @@
   "description": "Input data model for onattributechange query function block.",
   "type": "object",
   
-  "properties": {
-    "metamodel": { 
-    	"enum": [ "fbx-onattributechange-input-schema.json"],
-    	"description": "Mandatory metamodel identifier." 
-    },
-    "monitorId": {
-      "$ref": "rsg-id-schema.json",
-      "description": "UUID to endentify events (replies) that belong gto this query"
-    },
-    "monitorOperation": { 
-    	"enum": [ "REGISTER", "UNREGISTER"],
-    	"description": "REGISTER or UNREGISTER a listener to this monitor" 
-   	},  
-    "id": {
-      "$ref": "rsg-id-schema.json",
-      "description": "Id of the node to be monitored."
-    },
-    "attributeKey": {
-    	"type": "string",
-      	"description": "Attribute(s) indentified by its key to be monitored."
-    }
+  "anyOf": [   
+    	{
+    		"properties": {
+    		    "metamodel": { 
+			    	"enum": [ "fbx-onattributechange-input-schema.json"],
+			    	"description": "Mandatory metamodel identifier." 
+			    },
+			    "monitorId": {
+			      "$ref": "rsg-id-schema.json",
+			      "description": "UUID to endentify events (replies) that belong gto this query"
+			    },
+			    "monitorOperation": { 
+			    	"enum": [ "REGISTER", "UNREGISTER" ],
+			    	"description": "REGISTER or UNREGISTER a listener to this monitor." 
+			   	},  
+			    "id": {
+			      "$ref": "rsg-id-schema.json",
+			      "description": "Id of the node to be monitored."
+			    },
+			    "attributeKey": {
+			    	"type": "string",
+			      	"description": "Attribute(s) indentified by its key to be monitored."
+			    }
+    		},
+    		"required": [ "metamodel", "monitorId", "monitorOperation", "id", "attributeKey"],
+    		"additionalProperties": false
+    	},
+    	{
+    		"properties": {
+    		   "metamodel": { 
+			    	"enum": [ "fbx-onattributechange-input-schema.json"],
+			    	"description": "Mandatory metamodel identifier." 
+			    },
+			    "monitorId": {
+			      "$ref": "rsg-id-schema.json",
+			      "description": "UUID to endentify events (replies) that belong gto this query"
+			    },
+			    "monitorOperation": { 
+			    	"enum": [ "START", "STOP"],
+			    	"description": "START or STOP a listener to this monitor." 
+			   	}
+    		},
+    		"required": [ "metamodel", "monitorId", "monitorOperation"],
+    		"additionalProperties": false
+    	}
+  ],
 
-  },
-  
-  "required": [ "metamodel", "monitorOperation", "id", "attributeKey"],
-  "additionalProperties": false,
-  
+ 
   "definitions": {
     "ids": { 
       "type": "array",

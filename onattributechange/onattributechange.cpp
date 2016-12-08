@@ -49,6 +49,7 @@ struct ListenerSpec {
 	Id monitorId;
 	std::string attributeKey;
 	std::string lastAttributeValue;
+	bool isStarted;
 };
 
 /*
@@ -97,7 +98,7 @@ public:
 		for(std::map<Id, ListenerSpec>::iterator monitorsIt = listeners.begin(); monitorsIt != listeners.end(); ++monitorsIt) {
 			listener = monitorsIt->second;
 
-			if (id == listener.nodeId) {
+			if ((listener.isStarted) && (id == listener.nodeId)) {
 				vector<std::string> resultValues;
 				getValuesFromAttributeList(newAttributes, listener.attributeKey,resultValues);
 
@@ -114,7 +115,7 @@ public:
 							brics_3d::rsg::JSONTypecaster::addIdToJSON(listener.monitorId, result, "monitorId");
 							result.Set("attributeKey", libvariant::Variant(listener.attributeKey));
 							result.Set("oldValue", libvariant::Variant(listener.lastAttributeValue));
-							result.Set("newValue", libvariant::Variant(*it));
+							result.Set("newValue", libvariant::Variant(*it)); // cf. old_val; new_val in RethinkDB
 							string message = libvariant::Serialize(result, libvariant::SERIALIZE_JSON);
 							LOG(DEBUG) << "OnAttributeChangeObserver: Sending message: " << message;
 							int transferredBytes = 0;
@@ -231,9 +232,7 @@ public:
 		ListenerSpec listener;
 		listener.monitorId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "monitorId");
 		string monitorOperation = inputModelAsJSON.Get("monitorOperation").AsString();
-
-		listener.nodeId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "id");
-		listener.attributeKey =  inputModelAsJSON.Get("attributeKey").AsString();
+		listener.isStarted = false;
 
 
 		/* output data */
@@ -250,6 +249,9 @@ public:
 				monitor->port = wm->scene.getMonitorPort();
 				wm->scene.attachUpdateObserver(monitor);
 			}
+
+			listener.nodeId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "id");
+			listener.attributeKey =  inputModelAsJSON.Get("attributeKey").AsString();
 
 			if (monitor != 0 ) {
 
@@ -268,6 +270,32 @@ public:
 				}
 
 			}
+		} else if (monitorOperation.compare("START") == 0) {
+				LOG(DEBUG) << name << ": START operation found.";
+
+				if (monitor != 0 ) {
+					map<Id, ListenerSpec>::iterator monitorIt = monitor->listeners.find(listener.monitorId);
+					if(monitorIt != monitor->listeners.end()) {
+						monitorIt->second.isStarted = true;
+						LOG(INFO) << name << " Starting  monitor with id = " << listener.monitorId;
+					} else {
+						LOG(ERROR) << name << " Can not start unknown monitor with id = " << listener.monitorId;
+						result = false;
+					}
+				}
+		} else if (monitorOperation.compare("STOP") == 0) {
+				LOG(DEBUG) << name << ": STOP operation found.";
+
+				if (monitor != 0 ) {
+					map<Id, ListenerSpec>::iterator monitorIt = monitor->listeners.find(listener.monitorId);
+					if(monitorIt != monitor->listeners.end()) {
+						monitorIt->second.isStarted = false;
+						LOG(INFO) << name << " Stopping  monitor with id = " << listener.monitorId;
+					} else {
+						LOG(ERROR) << name << " Can not stop unknown monitor with id = " << listener.monitorId;
+						result = false;
+					}
+				}
 		} else if (monitorOperation.compare("UNREGISTER") == 0) {
 			if (monitor != 0 ) {
 
