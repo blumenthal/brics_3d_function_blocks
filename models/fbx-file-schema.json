@@ -1,0 +1,22 @@
+{    
+  "id": "fbx-file-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "Model to specify a single file.",
+  "description": "Output data model for osgvizualizer function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-file-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "file": { 
+      "type": "string",
+      "description": "File path and name."
+    }
+  },
+  
+  "required": [ "metamodel", "file"],
+  "additionalProperties": false,
+
+}
