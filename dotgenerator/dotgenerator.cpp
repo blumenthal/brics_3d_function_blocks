@@ -141,7 +141,7 @@ public:
 		}
 
 
-		fileName = path + dotFileName;
+		fileName = path + dotFileName + ".gv";
 		LOG(INFO) << "DotGenerator: Printing graph to file " << fileName;
 
 		/* Save a complete snapshopt relative to the root node */
@@ -162,11 +162,11 @@ public:
 			}
 		}
 
-		output.open((fileName + ".gv").c_str(), std::ios::trunc);
+		output.open((fileName).c_str(), std::ios::trunc);
 		if (!output.fail()) {
 			output << dotGraphGenerator.getDotGraph();
 		} else {
-			LOG(ERROR) << "DotGenerator: Cannot write to file " << fileName << ".gv";
+			LOG(ERROR) << "DotGenerator: Cannot write to file " << fileName;
 		}
 
 		output.flush();
