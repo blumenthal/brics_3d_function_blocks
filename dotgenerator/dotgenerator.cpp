@@ -130,7 +130,7 @@ public:
 				<< std::setw(2) << std::setfill('0')
 				<<	timeinfo->tm_sec;
 
-		dotFileName = "rsgdot_" + tmpFileName.str();
+		dotFileName = "rsg_dump_" + tmpFileName.str();
 
 		/* Check if input specifies fileName or path*/
 		if(inputModelAsJSON.Contains("dotFileName")) { // optional
