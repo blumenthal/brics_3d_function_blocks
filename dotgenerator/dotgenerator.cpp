@@ -56,7 +56,9 @@ public:
 
 
 		/* init algorithm */
-
+    	brics_3d::rsg::VisualizationConfiguration config;
+    	config.abbreviateIds = false;
+    	dotGraphGenerator.setConfig(config);
 
 	    /* get default location of model schemas */
 	    char defaultFilename[255] = { FBX_MODELS_DIR };
