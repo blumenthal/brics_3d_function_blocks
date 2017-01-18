@@ -1,0 +1,68 @@
+{    
+  "id": "fbx-oncreate-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A monitor function block that sends an event whenever a new Atom (Node, Group, Connection, ...)  with a particular set of attributes is created.",
+  "description": "Input data model for the oncreate monitor function block.",
+  "type": "object",
+  
+  "anyOf": [   
+    	{
+    		"properties": {
+    		    "metamodel": { 
+			    	"enum": [ "fbx-oncreate-input-schema.json"],
+			    	"description": "Mandatory metamodel identifier." 
+			    },
+			    "monitorId": {
+			      "$ref": "rsg-id-schema.json",
+			      "description": "UUID to endentify events (replies) that belong gto this query"
+			    },
+			    "monitorOperation": { 
+			    	"enum": [ "REGISTER", "UNREGISTER" ],
+			    	"description": "REGISTER or UNREGISTER a listener to this monitor." 
+			   	},  
+    			"attributes": { 
+    				"$ref": "#/definitions/attributes",
+    				"description": "Only atoms (Nodes, Groups, Connections, ...) with at least this attributes set trigger a monitor message."  
+    			}  
+    		},
+    		"required": [ "metamodel", "monitorId", "monitorOperation", "attributes"],
+    		"additionalProperties": false
+    	},
+    	{
+    		"properties": {
+    		   "metamodel": { 
+			    	"enum": [ "fbx-oncreate-input-schema.json"],
+			    	"description": "Mandatory metamodel identifier." 
+			    },
+			    "monitorId": {
+			      "$ref": "rsg-id-schema.json",
+			      "description": "UUID to endentify events (replies) that belong gto this query"
+			    },
+			    "monitorOperation": { 
+			    	"enum": [ "START", "STOP"],
+			    	"description": "START or STOP a listener to this monitor." 
+			   	}
+    		},
+    		"required": [ "metamodel", "monitorId", "monitorOperation"],
+    		"additionalProperties": false
+    	}
+  ],
+
+ 
+  "definitions": {
+    "ids": { 
+      "type": "array",
+      "items": [
+         { "$ref": "rsg-id-schema.json" }
+      ]
+    },
+          
+    "attributes": { 
+      "type": "array",
+      "items": [
+        { "$ref": "rsg-attribute-schema.json" }
+      ]
+    }
+  } 
+  }	
+}
