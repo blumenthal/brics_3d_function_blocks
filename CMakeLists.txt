@@ -38,4 +38,5 @@ IF(USE_FBX)
         #ADD_SUBDIRECTORY(./osgvisualizer) # != clang++
     ENDIF(USE_OSG)
     ADD_SUBDIRECTORY(./osmloader)
+    ADD_SUBDIRECTORY(./demloader)
 ENDIF(USE_FBX)

@@ -1,0 +1,28 @@
+{    
+  "id": "fbx-demloader-output-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to load a DEM GIS map.",
+  "description": "Output data model for demloader (query) function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-demloader-output-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},  	
+   	elevation : {
+   		"type": "number"
+   	},  
+   	minElevation : {
+   		"type": "number"
+   	},
+   	maxElevation : {
+   		"type": "number"
+   	}
+
+  },
+  
+  "required": [ "metamodel" ],
+  "additionalProperties": false
+
+}

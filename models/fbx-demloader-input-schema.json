@@ -1,0 +1,36 @@
+{    
+  "id": "fbx-demloader-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "A query function block to load a DEM GIS map.",
+  "description": "Input data model for demloader (query) function block.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-demloader-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "command": { 
+    	"enum": [ "LOAD_MAP", "GET_ELEVATION", "GET_MIN_MAX_ELEVATION"],
+    	"description": "The actuall commands." 
+   	},
+   	longitude : {
+   		"type": "number"
+   	},  
+   	latitude : {
+   		"type": "number"
+   	},
+   	"areaId": { 
+      "$ref": "rsg-id-schema.json",
+      "description": "Optional area to contrian MIN_MAY queriey to a certain area. An ara is defined by a Connection i.e. a sequence of points in a polygon."
+    },
+    "file": { 
+      "type": "string",
+      "description": "File path and name."
+    }
+  },
+  
+  "required": [ "metamodel", "command"],
+  "additionalProperties": false
+    
+}
