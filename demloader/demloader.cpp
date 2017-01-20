@@ -68,7 +68,11 @@ public:
 	    LOG(DEBUG) << name << ": models default path = " << modelsDefaultPath;
 	};
 
-	~DemLoader(){
+	~DemLoader() {
+		if(demDataset) {
+		    GDALClose((GDALDataset *) demDataset);
+			demDataset = 0;
+		}
 		LOG(INFO) << name << ": Stopping block " << name;
 	};
 
@@ -125,6 +129,7 @@ public:
 		    if(demDataset){
 		    	result = true;
 
+		    	/* print meta data */
 		    	printf( "Driver: %s/%s\n",
 		    			demDataset->GetDriver()->GetDescription(),
 		    			demDataset->GetDriver()->GetMetadataItem( GDAL_DMD_LONGNAME ) );
@@ -140,6 +145,59 @@ public:
 		    		printf( "Pixel Size = (%.6f,%.6f)\n",
 		    				geoTransform[1], geoTransform[5] );
 		    	}
+
+		    	/* access band */
+		    	GDALRasterBand  *poBand;
+		    	int             nBlockXSize, nBlockYSize;
+		    	int             bGotMin, bGotMax;
+		    	double          adfMinMax[2];
+		    	poBand = demDataset->GetRasterBand( 1 );
+		    	poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+		    	printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
+		    	        nBlockXSize, nBlockYSize,
+		    	        GDALGetDataTypeName(poBand->GetRasterDataType()),
+		    	        GDALGetColorInterpretationName(
+		    	            poBand->GetColorInterpretation()) );
+		    	adfMinMax[0] = poBand->GetMinimum( &bGotMin );
+		    	adfMinMax[1] = poBand->GetMaximum( &bGotMax );
+		    	if( ! (bGotMin && bGotMax) )
+		    	    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+		    	printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+		    	if( poBand->GetOverviewCount() > 0 )
+		    	    printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
+		    	if( poBand->GetColorTable() != NULL )
+		    	    printf( "Band has a color table with %d entries.\n",
+		    	             poBand->GetColorTable()->GetColorEntryCount() );
+
+
+		    	/* read it */
+		    	char *pafScanline;
+		    	int   nXSize = poBand->GetXSize();
+		    	pafScanline = (char *) CPLMalloc(sizeof(char)*nXSize);
+		    	poBand->RasterIO( GF_Read, 0, 0, nXSize, 1,
+		    	                  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
+		    	                  0, 0 );
+
+		    	/* affine projection */
+		    	int y = 1;
+		    	int x = 0;
+		    	//	  Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
+		    	//	  Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
+		    	double xGeo = geoTransform[0] + x*geoTransform[1] + y*geoTransform[2];
+		    	double yGeo = geoTransform[3] + x*geoTransform[4] + y*geoTransform[5];
+		    	LOG(DEBUG) << name << ": pixel at (" << x << ", " << y << ") is geolocated at (" << xGeo << ", "<< yGeo << ")";
+
+		    	for (int x = 0; x < nXSize; ++x) {
+					//LOG(DEBUG) << name << ": index = " << i << " value = " << pafScanline[i];
+					//printf("(%i, %x),", i , pafScanline[i]);
+
+
+
+
+					printf("%x, ", pafScanline[x]);
+				}
+
+
 		    }
 
 
