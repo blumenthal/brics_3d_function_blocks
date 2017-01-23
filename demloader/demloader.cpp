@@ -178,23 +178,19 @@ public:
 		    	                  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
 		    	                  0, 0 );
 
-		    	/* affine projection */
-		    	int y = 1;
+		    	/* try affine projections */
 		    	int x = 0;
-		    	//	  Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
-		    	//	  Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
-		    	double xGeo = geoTransform[0] + x*geoTransform[1] + y*geoTransform[2];
-		    	double yGeo = geoTransform[3] + x*geoTransform[4] + y*geoTransform[5];
-		    	LOG(DEBUG) << name << ": pixel at (" << x << ", " << y << ") is geolocated at (" << xGeo << ", "<< yGeo << ")";
+		    	int y = 0;
+		    	double xGeo = 0;
+		    	double yGeo = 0;
+		    	pixelToWorld(x, y, xGeo, yGeo);
+		    	worldToPixel(xGeo, yGeo, x, y);
+
 
 		    	for (int x = 0; x < nXSize; ++x) {
 					//LOG(DEBUG) << name << ": index = " << i << " value = " << pafScanline[i];
 					//printf("(%i, %x),", i , pafScanline[i]);
-
-
-
-
-					printf("%x, ", pafScanline[x]);
+					printf("%d, ", pafScanline[x]);
 				}
 
 
@@ -252,6 +248,38 @@ public:
 	}
 
 private:
+
+	bool pixelToWorld (int xPixel, int yPixel, double& xGeo, double& yGeo) {
+		if(!demDataset) {
+			LOG(ERROR) << name << "pixelToWorld: DEM not loaded yet.";
+			return false;
+		}
+
+		/* affine projection */
+		xGeo = geoTransform[0] + xPixel*geoTransform[1] + yPixel*geoTransform[2];
+    	yGeo = geoTransform[3] + xPixel*geoTransform[4] + yPixel*geoTransform[5];
+    	LOG(DEBUG) << name << "pixelToWorld: pixel at (" << xPixel << ", " << yPixel << ") is geolocated at (" << xGeo << ", "<< yGeo << ")";
+
+		return true;
+	}
+
+	bool worldToPixel (double xGeo, double yGeo, int& xPixel, int& yPixel) {
+		if(!demDataset) {
+			LOG(ERROR) << name << "worldToPixel: DEM not loaded yet.";
+			return false;
+		}
+
+		/* affine (inverse) projection */
+		/* NOTE: Due to rounding erroirs the location can be off by one pixel */
+    	xPixel = int((xGeo - geoTransform[0]) / geoTransform[1]);
+    	yPixel = int((yGeo - geoTransform[3]) / geoTransform[5]);
+    	LOG(DEBUG) << name << "worldToPixel: geolocation at (" << xGeo << ", " << yGeo << ") is corresponds to elemt at (" << xPixel << ", "<< yPixel << ")";
+
+    	/* check boundaries */
+
+    	return true;
+	}
+
 
 	/* Meta data */
 	std::string name;
