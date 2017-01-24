@@ -61,6 +61,15 @@ public:
 
 		/* init algorithm */
 		demDataset = 0;
+		demMin = -1.0;
+		demMax = - 1.0;
+
+		/*
+		 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth.
+		 * Use to determine invalid points.
+		 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
+		 */
+		globalMin = -11000; // in [m]
 
 	    /* get default location of model schemas */
 	    char defaultFilename[255] = { FBX_MODELS_DIR };
@@ -163,36 +172,47 @@ public:
 		    	if( ! (bGotMin && bGotMax) )
 		    	    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
 		    	printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
+		    	demMin =  adfMinMax[0];
+		    	demMax =  adfMinMax[1];
 		    	if( poBand->GetOverviewCount() > 0 )
 		    	    printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
 		    	if( poBand->GetColorTable() != NULL )
 		    	    printf( "Band has a color table with %d entries.\n",
 		    	             poBand->GetColorTable()->GetColorEntryCount() );
 
+		    	if(poBand->GetRasterDataType() != GDT_Float32) {
+		    		result = false;
+		    	} else {
 
-		    	/* read it */
-		    	char *pafScanline;
-		    	int   nXSize = poBand->GetXSize();
-		    	pafScanline = (char *) CPLMalloc(sizeof(char)*nXSize);
-		    	poBand->RasterIO( GF_Read, 0, 0, nXSize, 1,
-		    	                  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
-		    	                  0, 0 );
+					/* read it */
+					float *pafScanline;
+					int   nXSize = poBand->GetXSize();
+					int line = 3000;
+					pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+					poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
+									  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
+									  0, 0 );
 
-		    	/* try affine projections */
-		    	int x = 0;
-		    	int y = 0;
-		    	double xGeo = 0;
-		    	double yGeo = 0;
-		    	pixelToWorld(x, y, xGeo, yGeo);
-		    	worldToPixel(xGeo, yGeo, x, y);
+					/* try affine projections */
+					int xPixel = 0;
+					int yPixel = 0;
+					double xGeo = 0;
+					double yGeo = 0;
+					pixelToWorld(xPixel, yPixel, xGeo, yGeo);
+					worldToPixel(xGeo, yGeo, xPixel, yPixel);
 
 
-		    	for (int x = 0; x < nXSize; ++x) {
-					//LOG(DEBUG) << name << ": index = " << i << " value = " << pafScanline[i];
-					//printf("(%i, %x),", i , pafScanline[i]);
-					printf("%d, ", pafScanline[x]);
-				}
+					for (int x = 0; x < nXSize; ++x) {
 
+						/*
+						 * Note, pixels can be invalid!
+						 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
+						 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth
+						 */
+						printf("(%i, %f),", x , pafScanline[x]);
+
+					}
+		    	}
 
 		    }
 
@@ -273,7 +293,7 @@ private:
 		/* NOTE: Due to rounding erroirs the location can be off by one pixel */
     	xPixel = int((xGeo - geoTransform[0]) / geoTransform[1]);
     	yPixel = int((yGeo - geoTransform[3]) / geoTransform[5]);
-    	LOG(DEBUG) << name << "worldToPixel: geolocation at (" << xGeo << ", " << yGeo << ") is corresponds to elemt at (" << xPixel << ", "<< yPixel << ")";
+    	LOG(DEBUG) << name << "worldToPixel: geolocation at (" << xGeo << ", " << yGeo << ") is corresponds to elemet at (" << xPixel << ", "<< yPixel << ")";
 
     	/* check boundaries */
 
@@ -292,6 +312,9 @@ private:
 
 	/* Parameters */
 	double geoTransform[6];
+	double demMax;
+	double demMin;
+	double globalMin;
 
 };
 
