@@ -5,32 +5,66 @@
   "description": "Input data model for demloader (query) function block.",
   "type": "object",
   
-  "properties": {
-    "metamodel": { 
-    	"enum": [ "fbx-demloader-input-schema.json"],
-    	"description": "Mandatory metamodel identifier." 
-   	},
-    "command": { 
-    	"enum": [ "LOAD_MAP", "GET_ELEVATION", "GET_MIN_MAX_ELEVATION"],
-    	"description": "The actuall commands." 
-   	},
-   	longitude : {
-   		"type": "number"
-   	},  
-   	latitude : {
-   		"type": "number"
-   	},
-   	"areaId": { 
-      "$ref": "rsg-id-schema.json",
-      "description": "Optional area to contrian MIN_MAY queriey to a certain area. An ara is defined by a Connection i.e. a sequence of points in a polygon."
+  "anyOf": [   
+    {
+      "properties": {
+        "metamodel": { 
+        	"enum": [ "fbx-demloader-input-schema.json"],
+        	"description": "Mandatory metamodel identifier." 
+       	},
+        "command": { 
+        	"enum": [ "LOAD_MAP" ],
+        	"description": "The actuall commands." 
+       	},
+        "file": { 
+          "type": "string",
+          "description": "File path and name."
+        }
+      },
+      
+      "required": [ "metamodel", "command", "file"],
+      "additionalProperties": false
     },
-    "file": { 
-      "type": "string",
-      "description": "File path and name."
+    {
+      "properties": {
+        "metamodel": { 
+        	"enum": [ "fbx-demloader-input-schema.json"],
+        	"description": "Mandatory metamodel identifier." 
+       	},
+        "command": { 
+        	"enum": [ "GET_ELEVATION" ],
+        	"description": "The actuall commands." 
+       	},
+      	"latitude" : {
+       		"type": "number"
+       	},
+       	"longitude" : {
+       		"type": "number"
+       	}
+      },
+      
+      "required": [ "metamodel", "command", "latitude", "longitude"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "metamodel": { 
+        	"enum": [ "fbx-demloader-input-schema.json"],
+        	"description": "Mandatory metamodel identifier." 
+       	},
+        "command": { 
+        	"enum": [ "GET_MIN_MAX_ELEVATION"],
+        	"description": "The actuall commands." 
+       	},
+       	"areaId": { 
+          "$ref": "rsg-id-schema.json",
+          "description": "Optional area to contrian MIN_MAY queriey to a certain area. An ara is defined by a Connection i.e. a sequence of points in a polygon."
+        }
+      },
+      
+      "required": [ "metamodel", "command"],
+      "additionalProperties": false
     }
-  },
-  
-  "required": [ "metamodel", "command"],
-  "additionalProperties": false
+  ]
     
 }
