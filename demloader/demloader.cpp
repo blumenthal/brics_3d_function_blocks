@@ -61,15 +61,18 @@ public:
 
 		/* init algorithm */
 		demDataset = 0;
-		demMin = -1.0;
-		demMax = - 1.0;
+		demMinElevation = -1.0;
+		demMaxElevation = - 1.0;
+		demMaxPixelSizeX = 0;
+		demMaxPixelSizeY = 0;
+		demBandIndex = 1;
 
 		/*
 		 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth.
 		 * Use to determine invalid points.
 		 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
 		 */
-		globalMin = -11000; // in [m]
+		globalMinElevation = -11000; // in [m]
 
 	    /* get default location of model schemas */
 	    char defaultFilename[255] = { FBX_MODELS_DIR };
@@ -131,12 +134,11 @@ public:
 		 *
 		 */
 		if (command.compare("LOAD_MAP") == 0) {
-			LOG(DEBUG) << "DemLoader: LOAD_MAP";
+			LOG(INFO) << "DemLoader: LOAD_MAP";
 
 		    GDALAllRegister();
 		    demDataset = (GDALDataset *) GDALOpen( demFile.c_str(), GA_ReadOnly );
-		    if(demDataset){
-		    	result = true;
+		    if(demDataset) {
 
 		    	/* print meta data */
 		    	printf( "Driver: %s/%s\n",
@@ -160,8 +162,8 @@ public:
 		    	int             nBlockXSize, nBlockYSize;
 		    	int             bGotMin, bGotMax;
 		    	double          adfMinMax[2];
-		    	poBand = demDataset->GetRasterBand( 1 );
-		    	poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+		    	poBand = demDataset->GetRasterBand(demBandIndex);
+		    	poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 		    	printf( "Block=%dx%d Type=%s, ColorInterp=%s\n",
 		    	        nBlockXSize, nBlockYSize,
 		    	        GDALGetDataTypeName(poBand->GetRasterDataType()),
@@ -172,16 +174,22 @@ public:
 		    	if( ! (bGotMin && bGotMax) )
 		    	    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
 		    	printf( "Min=%.3fd, Max=%.3f\n", adfMinMax[0], adfMinMax[1] );
-		    	demMin =  adfMinMax[0];
-		    	demMax =  adfMinMax[1];
+		    	demMinElevation =  adfMinMax[0];
+		    	demMaxElevation =  adfMinMax[1];
 		    	if( poBand->GetOverviewCount() > 0 )
 		    	    printf( "Band has %d overviews.\n", poBand->GetOverviewCount() );
 		    	if( poBand->GetColorTable() != NULL )
 		    	    printf( "Band has a color table with %d entries.\n",
 		    	             poBand->GetColorTable()->GetColorEntryCount() );
 
+		    	 demMaxPixelSizeX = poBand->GetXSize();
+		    	 demMaxPixelSizeY = poBand->GetYSize();
+
 		    	if(poBand->GetRasterDataType() != GDT_Float32) {
+				    GDALClose((GDALDataset *) demDataset);
+					demDataset = 0;
 		    		result = false;
+					outputModelAsJSON.Set("result", "DEM_FILE_NOT_LOADED");
 		    	} else {
 
 					/* read it */
@@ -202,18 +210,20 @@ public:
 					worldToPixel(xGeo, yGeo, xPixel, yPixel);
 
 
-					for (int x = 0; x < nXSize; ++x) {
-
-						/*
-						 * Note, pixels can be invalid!
-						 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
-						 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth
-						 */
-						printf("(%i, %f),", x , pafScanline[x]);
-
-					}
+//					for (int x = 0; x < nXSize; ++x) {
+//
+//						/*
+//						 * Note, pixels can be invalid!
+//						 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
+//						 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth
+//						 */
+//						printf("(%i, %f),", x , pafScanline[x]);
+//
+//					}
 		    	}
 
+		    	result = true;
+				outputModelAsJSON.Set("result", "DEM_FILE_LOADED");
 		    }
 
 
@@ -221,9 +231,35 @@ public:
 
 
 		} else if (command.compare("GET_ELEVATION") == 0) {
-			LOG(DEBUG) << "DemLoader: GET_ELEVATION";
+			LOG(INFO) << "DemLoader: GET_ELEVATION";
+			outputModelAsJSON.Set("result", "DEM_FILE_NOT_LOADED");
+
+		    if(demDataset) {
+		    	double xGeo = inputModelAsJSON.Get("latitude").AsDouble();
+		    	double yGeo = inputModelAsJSON.Get("longitude").AsDouble();
+		    	double elevation = globalMinElevation;
+		    	string resultMessage = "";
+
+		    	result = getElevationAt(xGeo, yGeo, elevation, resultMessage);
+
+				if(result) { // Only valid values are returned, other wise this filed is skipped
+					outputModelAsJSON.Set("elevation", elevation);
+				}
+
+		    	outputModelAsJSON.Set("result", resultMessage);
+		    }
+
 		} else if (command.compare("GET_MIN_MAX_ELEVATION") == 0) {
-			LOG(DEBUG) << "DemLoader: GET_MIN_MAX_ELEVATION";
+			LOG(INFO) << "DemLoader: GET_MIN_MAX_ELEVATION";
+			outputModelAsJSON.Set("result", "DEM_FILE_NOT_LODED");
+
+		    if(demDataset) {
+		    	outputModelAsJSON.Set("minElevation", demMinElevation);
+		    	outputModelAsJSON.Set("maxElevation", demMaxElevation);
+		    	outputModelAsJSON.Set("result", "ELEVATION_VALUE_EXISTS");
+		    	result = true;
+		    }
+
 		} else {
 			LOG(ERROR) << "DemLoader: Unknown command.";
 		}
@@ -296,10 +332,67 @@ private:
     	LOG(DEBUG) << name << "worldToPixel: geolocation at (" << xGeo << ", " << yGeo << ") is corresponds to elemet at (" << xPixel << ", "<< yPixel << ")";
 
     	/* check boundaries */
+    	if ( xPixel < 0 || xPixel >= demMaxPixelSizeX ) {
+    		LOG(ERROR) << name << "worldToPixel: X = " << xPixel << " is out of bounds [" << 0 << ", " << demMaxPixelSizeX << "].";
+    		return false;
+    	}
+    	if ( yPixel < 0 || yPixel >= demMaxPixelSizeY ) {
+    		LOG(ERROR) << name << "worldToPixel: Y = " << xPixel << " is out of bounds [" << 0 << ", " << demMaxPixelSizeY << "].";
+    		return false;
+    	}
 
     	return true;
 	}
 
+	bool getElevationAt(double xGeo, double yGeo, double& elevation, string& resultMessage) {
+		resultMessage = "ELEVATION_ERROR"; // only internally used
+		elevation = globalMinElevation;
+
+		int xPixel = 0;
+		int yPixel = 0;
+
+		/* get pixel indices and check if they are within the boundaries of the raster */
+		if(!worldToPixel(xGeo, yGeo, xPixel, yPixel)) {
+			resultMessage = "ELEVATION_QUERY_OUT_OF_BOUNDS";
+			return false;
+		}
+
+		/* open respective band*/
+		if(demDataset) {
+	    	GDALRasterBand  *poBand;
+	    	poBand = demDataset->GetRasterBand(demBandIndex);
+
+	    	/* read it */
+	    	float *pafScanline;
+	    	int   nXSize = poBand->GetXSize();
+	    	int line = yPixel;
+	    	pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+	    	poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
+	    			pafScanline, nXSize, 1, poBand->GetRasterDataType(),
+	    			0, 0 );
+
+	    	elevation = pafScanline[xPixel];
+	    	LOG(DEBUG) << name << "getElevationAt: Found elevation value = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
+			resultMessage = "ELEVATION_VALUE_EXISTS";
+
+			if(elevation <= globalMinElevation) {
+				LOG(DEBUG) << name << "getElevationAt: Elevation value = " << elevation << " is invalid.";
+				resultMessage = "ELEVATION_VALUE_INVALID";
+				return false;
+			}
+
+	    	for (int x = 0; x < nXSize; ++x) { // DGB
+	    		printf("(%i, %f),", x , pafScanline[x]);
+	    	}
+
+
+		} else {
+			resultMessage = "DEM_FILE_NOT_LOADED";
+			return false;
+		}
+
+		return true;
+	}
 
 	/* Meta data */
 	std::string name;
@@ -312,9 +405,12 @@ private:
 
 	/* Parameters */
 	double geoTransform[6];
-	double demMax;
-	double demMin;
-	double globalMin;
+	double demMaxElevation;
+	double demMinElevation;
+	double globalMinElevation;
+	int demMaxPixelSizeX;
+	int demMaxPixelSizeY;
+	int demBandIndex;
 
 };
 
