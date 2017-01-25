@@ -43,6 +43,7 @@
 
 /* GDAL includes */
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 
 /***********FBX***************/
 
@@ -66,6 +67,8 @@ public:
 		demMaxPixelSizeX = 0;
 		demMaxPixelSizeY = 0;
 		demBandIndex = 1;
+		oSourceSRS.SetWellKnownGeogCS("WGS84"); // default value, might be overridden by meta data of dataset
+		oTargetSRS.SetWellKnownGeogCS("WGS84");
 
 		/*
 		 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth.
@@ -117,24 +120,17 @@ public:
 
 		/* get data */
 		string command = inputModelAsJSON.Get("command").AsString(); // "enum": [ "LOAD_MAP", "GET_ELEVATION", "GET_MIN_MAX_ELEVATION"],
-//		double longitude = inputModelAsJSON.Get("longitude").AsDouble();
-//		double latitude = inputModelAsJSON.Get("latitude").AsDouble();
-		brics_3d::rsg::Id areaId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "areaId");
-		string demFile = inputModelAsJSON.Get("file").AsString();
 
 
 		/* output data */
 		bool result = false;
-//	   	double elevation = -1.0;
-//	   	double minElevation = -1.0;
-//	   	double maxElevation = -1.0;
-		//libvariant::Variant poses(libvariant::VariantDefines::ListType);
 
 		/* execute query
 		 *
 		 */
 		if (command.compare("LOAD_MAP") == 0) {
 			LOG(INFO) << "DemLoader: LOAD_MAP";
+			string demFile = inputModelAsJSON.Get("file").AsString();
 
 		    GDALAllRegister();
 		    demDataset = (GDALDataset *) GDALOpen( demFile.c_str(), GA_ReadOnly );
@@ -185,6 +181,8 @@ public:
 		    	 demMaxPixelSizeX = poBand->GetXSize();
 		    	 demMaxPixelSizeY = poBand->GetYSize();
 
+
+
 		    	if(poBand->GetRasterDataType() != GDT_Float32) {
 				    GDALClose((GDALDataset *) demDataset);
 					demDataset = 0;
@@ -195,7 +193,7 @@ public:
 					/* read it */
 					float *pafScanline;
 					int   nXSize = poBand->GetXSize();
-					int line = 3000;
+					int line = 0;
 					pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
 					poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
 									  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
@@ -242,7 +240,7 @@ public:
 
 		    	result = getElevationAt(xGeo, yGeo, elevation, resultMessage);
 
-				if(result) { // Only valid values are returned, other wise this filed is skipped
+				if(result) { // Only valid values are returned, otherwise this file is skipped
 					outputModelAsJSON.Set("elevation", elevation);
 				}
 
@@ -254,6 +252,8 @@ public:
 			outputModelAsJSON.Set("result", "DEM_FILE_NOT_LODED");
 
 		    if(demDataset) {
+		    	brics_3d::rsg::Id areaId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "areaId");
+
 		    	outputModelAsJSON.Set("minElevation", demMinElevation);
 		    	outputModelAsJSON.Set("maxElevation", demMaxElevation);
 		    	outputModelAsJSON.Set("result", "ELEVATION_VALUE_EXISTS");
@@ -266,7 +266,6 @@ public:
 
 
 		/* prepare output */
-		//outputModelAsJSON.Set("poses", poses);
 
 
 		if(result) {
@@ -324,6 +323,14 @@ private:
 			LOG(ERROR) << name << "worldToPixel: DEM not loaded yet.";
 			return false;
 		}
+
+		/* Coordinate to coordinate transform */
+		LOG(DEBUG) << name << "worldToPixel: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
+		OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
+		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
+			LOG(ERROR) << name << "worldToPixel: Transformation failed.";
+		}
+		LOG(DEBUG) << name << "worldToPixel: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 
 		/* affine (inverse) projection */
 		/* NOTE: Due to rounding erroirs the location can be off by one pixel */
@@ -402,6 +409,8 @@ private:
 
 	/* Algorithm(s) */
 	GDALDataset *demDataset;
+	OGRSpatialReference oSourceSRS; // as derived from dataset
+	OGRSpatialReference oTargetSRS; // Ours system here is WGS84
 
 	/* Parameters */
 	double geoTransform[6];
