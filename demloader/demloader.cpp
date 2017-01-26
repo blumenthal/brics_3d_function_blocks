@@ -74,8 +74,10 @@ public:
 		 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth.
 		 * Use to determine invalid points.
 		 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
+		 * NOTE: Some other reprojection tools insert 0 as VOID type. E.g. gdalwarp
+		 * so we put 0 to be on the safe side.
 		 */
-		globalMinElevation = -11000; // in [m]
+		globalMinElevation = 0;//-11000; // in [m]
 
 	    /* get default location of model schemas */
 	    char defaultFilename[255] = { FBX_MODELS_DIR };
@@ -153,6 +155,19 @@ public:
 		    				geoTransform[1], geoTransform[5] );
 		    	}
 
+		    	/*
+		    	 * Get geo coordinate system for meta data of the file.
+		    	 * E.g. the Davos map uses EPSG:21781 while the Chamoluc map has WGS84
+		    	 * cf. http://www.gdal.org/osr_tutorial.htm
+		    	 */
+		    	char *pszWkt = const_cast<char*>(demDataset->GetProjectionRef());
+		    	oTargetSRS.importFromWkt(&pszWkt); // strange that it is not a const char* here ...
+
+				char    *pszWKT = NULL;
+				oTargetSRS.exportToWkt( &pszWKT );
+				printf( "%s\n", pszWKT );
+
+
 		    	/* access band */
 		    	GDALRasterBand  *poBand;
 		    	int             nBlockXSize, nBlockYSize;
@@ -190,16 +205,16 @@ public:
 					outputModelAsJSON.Set("result", "DEM_FILE_NOT_LOADED");
 		    	} else {
 
-					/* read it */
-					float *pafScanline;
-					int   nXSize = poBand->GetXSize();
-					int line = 0;
-					pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
-					poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
-									  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
-									  0, 0 );
+//					/* read it */
+//					float *pafScanline;
+//					int   nXSize = poBand->GetXSize();
+//					int line = 0;
+//					pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+//					poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
+//									  pafScanline, nXSize, 1, poBand->GetRasterDataType(),
+//									  0, 0 );
 
-					/* try affine projections */
+					/* try affine projections - this is only for debugging purposes*/
 					int xPixel = 0;
 					int yPixel = 0;
 					double xGeo = 0;
@@ -207,17 +222,6 @@ public:
 					pixelToWorld(xPixel, yPixel, xGeo, yGeo);
 					worldToPixel(xGeo, yGeo, xPixel, yPixel);
 
-
-//					for (int x = 0; x < nXSize; ++x) {
-//
-//						/*
-//						 * Note, pixels can be invalid!
-//						 * E.g. ArcGIS uses -32767 to indicate a VOID type. (~ limit of 16bit int)
-//						 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth
-//						 */
-//						printf("(%i, %f),", x , pafScanline[x]);
-//
-//					}
 		    	}
 
 		    	result = true;
@@ -315,6 +319,16 @@ private:
     	yGeo = geoTransform[3] + xPixel*geoTransform[4] + yPixel*geoTransform[5];
     	LOG(DEBUG) << name << "pixelToWorld: pixel at (" << xPixel << ", " << yPixel << ") is geolocated at (" << xGeo << ", "<< yGeo << ")";
 
+
+		/* Coordinate to coordinate transform */
+		LOG(DEBUG) << name << "pixelToWorld: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
+		OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
+		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
+			LOG(ERROR) << name << "pixelToWorld: Transformation failed.";
+			return false;
+		}
+		LOG(DEBUG) << name << "pixelToWorld: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
+
 		return true;
 	}
 
@@ -329,6 +343,7 @@ private:
 		OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
 		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
 			LOG(ERROR) << name << "worldToPixel: Transformation failed.";
+			return false;
 		}
 		LOG(DEBUG) << name << "worldToPixel: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 
@@ -388,9 +403,9 @@ private:
 				return false;
 			}
 
-	    	for (int x = 0; x < nXSize; ++x) { // DGB
-	    		printf("(%i, %f),", x , pafScanline[x]);
-	    	}
+//	    	for (int x = 0; x < nXSize; ++x) { // DGB
+//	    		printf("(%i, %f),", x , pafScanline[x]);
+//	    	}
 
 
 		} else {
