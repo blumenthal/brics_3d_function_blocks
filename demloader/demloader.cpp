@@ -20,7 +20,7 @@
 /**
  * @file demloader
  *
- * A query function block to load a DEM GIS map.
+ * A query function block to load and query a Digital Elevation Map (DEM).
  *
  *
  */
@@ -77,7 +77,7 @@ public:
 		 * NOTE: Some other reprojection tools insert 0 as VOID type. E.g. gdalwarp
 		 * so we put 0 to be on the safe side.
 		 */
-		globalMinElevation = 0;//-11000; // in [m]
+    	globalMinElevation = 0;//-11000; // in [m]
 
 	    /* get default location of model schemas */
 	    char defaultFilename[255] = { FBX_MODELS_DIR };
@@ -132,6 +132,13 @@ public:
 		 */
 		if (command.compare("LOAD_MAP") == 0) {
 			LOG(INFO) << "DemLoader: LOAD_MAP";
+
+			if(demDataset) {
+				LOG(INFO) << "DemLoader: Overriding map file.";
+			    GDALClose((GDALDataset *) demDataset);
+				demDataset = 0;
+			}
+
 			string demFile = inputModelAsJSON.Get("file").AsString();
 
 		    GDALAllRegister();
@@ -258,10 +265,96 @@ public:
 		    if(demDataset) {
 		    	brics_3d::rsg::Id areaId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "areaId");
 
-		    	outputModelAsJSON.Set("minElevation", demMinElevation);
-		    	outputModelAsJSON.Set("maxElevation", demMaxElevation);
-		    	outputModelAsJSON.Set("result", "ELEVATION_VALUE_EXISTS");
-		    	result = true;
+		    	if(!areaId.isNil()) {
+		    		result = false;
+		    		float minAreaElevation = std::numeric_limits<float>::max();
+		    		float maxAreaElevation = std::numeric_limits<float>::min();
+
+		    		/*
+		    		 * prepare polygon
+		    		 */
+		    		std::vector<brics_3d::rsg::Id> polygonIs;
+		    		if(!wm->scene.getConnectionTargetIds(areaId,  polygonIs)) {
+		    			LOG(ERROR) << name << "No area connection found.";
+		    			return false; // no connection found
+		    		}
+
+		    		/* Get origin */
+		    		brics_3d::rsg::Id originId;
+		    		vector<brics_3d::rsg::Attribute> attributes;
+		    		vector<brics_3d::rsg::Id> ids;
+		    		attributes.push_back(brics_3d::rsg::Attribute("gis:origin", "wgs84"));
+		    		wm->scene.getNodes(attributes, ids);
+		    		if (ids.size() > 0) {
+		    			originId = ids[0];
+		    		} else {
+		    			LOG(WARNING) << name << "No gis origin found. Using the root node instead.";
+		    			originId = wm->getRootNodeId(); // Fall back to root node
+		    		}
+
+		    		/* for each point of the area, get the pose (NOTE: this might be better cached) */
+		    		vector<brics_3d::Point3D> polygonPoints;
+		    		for(std::vector<brics_3d::rsg::Id>::const_iterator it = polygonIs.begin(); it != polygonIs.end(); ++it) {
+		    			brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr transform;
+		    			wm->scene.getTransformForNode(*it, originId, wm->now(), transform);
+		    			brics_3d::Point3D polygonPoint(transform->getRawData()[brics_3d::matrixEntry::x], transform->getRawData()[brics_3d::matrixEntry::y], 0);
+		    			polygonPoints.push_back(polygonPoint);
+		    			LOG(DEBUG) << name << "Polygon point: " << polygonPoint;
+		    		}
+		    		LOG(DEBUG) << name << "Polygon has: " << polygonPoints.size() << " points.";
+
+
+			    	/* access band */
+			    	GDALRasterBand  *poBand;
+			    	float *pafScanline;
+			    	poBand = demDataset->GetRasterBand(demBandIndex);
+
+
+			    	/* read it */
+			    	for (int yPixel = 0; yPixel < demMaxPixelSizeY; ++yPixel) { // line by line
+
+						pafScanline = (float *) CPLMalloc(sizeof(float)*demMaxPixelSizeX); // no ownership
+						poBand->RasterIO( GF_Read, 0, yPixel, demMaxPixelSizeX, 1,
+								pafScanline, demMaxPixelSizeX, 1, poBand->GetRasterDataType(),
+								0, 0 );
+
+						for (int xPixel = 0; xPixel < demMaxPixelSizeX; ++xPixel) { // pixel by pixel
+							//printf("(%i, %f),", xPixel , pafScanline[xPixel]);
+
+							/* for each raster pixel check if it is within area */
+							if(pixelInPolygon(polygonPoints, xPixel, yPixel)) {
+								float elevation = pafScanline[xPixel];
+								if(elevation <= minAreaElevation) {
+									minAreaElevation = elevation;
+									result = true; // at least once
+								}
+								if(elevation >= maxAreaElevation) {
+									maxAreaElevation = elevation;
+									result = true; // at least once
+								}
+
+							}
+						}
+
+
+					}
+
+		    		outputModelAsJSON.Set("minElevation", minAreaElevation);
+		    		outputModelAsJSON.Set("maxElevation", maxAreaElevation);
+
+		    	} else {
+
+		    		outputModelAsJSON.Set("minElevation", demMinElevation);
+		    		outputModelAsJSON.Set("maxElevation", demMaxElevation);
+		    	}
+
+		    	if(result) {
+		    		outputModelAsJSON.Set("result", "ELEVATION_VALUE_EXISTS");
+		    	} else {
+		    		outputModelAsJSON.Set("result", "ELEVATION_QUERY_ARE_OUT_OF_BOUNDS");
+		    	}
+
+
 		    }
 
 		} else {
@@ -317,17 +410,17 @@ private:
 		/* affine projection */
 		xGeo = geoTransform[0] + xPixel*geoTransform[1] + yPixel*geoTransform[2];
     	yGeo = geoTransform[3] + xPixel*geoTransform[4] + yPixel*geoTransform[5];
-    	LOG(DEBUG) << name << "pixelToWorld: pixel at (" << xPixel << ", " << yPixel << ") is geolocated at (" << xGeo << ", "<< yGeo << ")";
+    	//LOG(DEBUG) << name << "pixelToWorld: pixel at (" << xPixel << ", " << yPixel << ") is geolocated at (" << xGeo << ", "<< yGeo << ")";
 
 
 		/* Coordinate to coordinate transform */
-		LOG(DEBUG) << name << "pixelToWorld: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
+		//LOG(DEBUG) << name << "pixelToWorld: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 		OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
 		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
 			LOG(ERROR) << name << "pixelToWorld: Transformation failed.";
 			return false;
 		}
-		LOG(DEBUG) << name << "pixelToWorld: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
+		//LOG(DEBUG) << name << "pixelToWorld: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 
 		return true;
 	}
@@ -403,17 +496,86 @@ private:
 				return false;
 			}
 
-//	    	for (int x = 0; x < nXSize; ++x) { // DGB
-//	    		printf("(%i, %f),", x , pafScanline[x]);
-//	    	}
-
-
 		} else {
 			resultMessage = "DEM_FILE_NOT_LOADED";
 			return false;
 		}
 
 		return true;
+	}
+
+	bool isInArea(int xPixel, int yPixel, brics_3d::rsg::Id areaId) {
+//	bool isInArea(int xPixel, int yPixel, vector<brics_3d::Point3D> polygonPoints) {
+		bool isInArea =  false;
+
+
+		double x = 0;
+		double y = 0;
+		pixelToWorld(xPixel, yPixel, x, y);
+
+		std::vector<brics_3d::rsg::Id> polygonIs;
+		if(!wm->scene.getConnectionTargetIds(areaId,  polygonIs)) {
+			LOG(ERROR) << name << "::isInArea: no connection found.";
+			return false; // no connection found
+		}
+
+		/* Get origin */
+		brics_3d::rsg::Id originId;
+		vector<brics_3d::rsg::Attribute> attributes;
+		vector<brics_3d::rsg::Id> ids;
+		attributes.push_back(brics_3d::rsg::Attribute("gis:origin", "wgs84"));
+		wm->scene.getNodes(attributes, ids);
+		if (ids.size() > 0) {
+			originId = ids[0];
+		} else {
+			LOG(WARNING) << name << "No gis origin found. Using the root node instead.";
+			originId = wm->getRootNodeId(); // Fall back to root node
+		}
+
+		/* for each point of the area, get the pose (NOTE: this might be better cached) */
+		vector<brics_3d::Point3D> polygonPoints;
+		for(std::vector<brics_3d::rsg::Id>::const_iterator it = polygonIs.begin(); it != polygonIs.end(); ++it) {
+			brics_3d::IHomogeneousMatrix44::IHomogeneousMatrix44Ptr transform;
+			wm->scene.getTransformForNode(*it, originId, wm->now(), transform);
+			brics_3d::Point3D polygonPoint(transform->getRawData()[brics_3d::matrixEntry::x], transform->getRawData()[brics_3d::matrixEntry::y], 0);
+			polygonPoints.push_back(polygonPoint);
+			LOG(DEBUG) << name << "::isInArea: polygon point: " << polygonPoint;
+		}
+		LOG(DEBUG) << name << "::isInArea: polygon has: " << polygonPoints.size() << " points.";
+
+		LOG(DEBUG) << name << "::isInArea: testing node: (" << x << ", " << y << ")";
+		isInArea = pointInPolygon(polygonPoints, x, y);
+		if(isInArea) {
+			LOG(DEBUG) << name << "::isInArea: node (" << x << ", " << y << ") is within polygon";
+		}
+
+		return isInArea;
+	}
+
+	bool pixelInPolygon(vector<brics_3d::Point3D>& polygonPoints, int  xPixel, int yPixel) {
+		double xGeo = 0;
+		double yGeo = 0;
+		pixelToWorld(xPixel, yPixel, xGeo, yGeo);
+		return pointInPolygon(polygonPoints, xGeo, yGeo);
+	}
+
+	bool pointInPolygon(vector<brics_3d::Point3D>& polygonPoints, double  x, double y) {
+
+		  int   i;
+		  int j=polygonPoints.size()-1;
+		  bool  oddNodes=false;
+
+		  for (i=0; i<polygonPoints.size(); i++) {
+			  if (((polygonPoints[i].getY()<y) && (polygonPoints[j].getY())>=y)
+					  ||  ((polygonPoints[j].getY()<y) && (polygonPoints[i].getY()>=y))) {
+				  if (polygonPoints[i].getX()+(y-polygonPoints[i].getY())/(polygonPoints[j].getY()-polygonPoints[i].getY())*(polygonPoints[j].getX()-polygonPoints[i].getX())<x) {
+					  oddNodes=!oddNodes;
+				  }
+			  }
+			  j=i;
+		  }
+
+		  return oddNodes;
 	}
 
 	/* Meta data */
