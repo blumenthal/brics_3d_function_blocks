@@ -69,6 +69,7 @@ public:
 		demBandIndex = 1;
 		oSourceSRS.SetWellKnownGeogCS("WGS84"); // default value, might be overridden by meta data of dataset
 		oTargetSRS.SetWellKnownGeogCS("WGS84");
+		poCT = 0;
 
 		/*
 		 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth.
@@ -174,6 +175,8 @@ public:
 				oTargetSRS.exportToWkt( &pszWKT );
 				printf( "%s\n", pszWKT );
 
+
+				poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
 
 		    	/* access band */
 		    	GDALRasterBand  *poBand;
@@ -336,7 +339,7 @@ public:
 							}
 						}
 
-
+						CPLFree(pafScanline);
 					}
 
 		    		outputModelAsJSON.Set("minElevation", minAreaElevation);
@@ -346,6 +349,7 @@ public:
 
 		    		outputModelAsJSON.Set("minElevation", demMinElevation);
 		    		outputModelAsJSON.Set("maxElevation", demMaxElevation);
+		    		result = true;
 		    	}
 
 		    	if(result) {
@@ -415,7 +419,7 @@ private:
 
 		/* Coordinate to coordinate transform */
 		//LOG(DEBUG) << name << "pixelToWorld: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
-		OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
+		//OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
 		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
 			LOG(ERROR) << name << "pixelToWorld: Transformation failed.";
 			return false;
@@ -489,6 +493,8 @@ private:
 	    	elevation = pafScanline[xPixel];
 	    	LOG(DEBUG) << name << "getElevationAt: Found elevation value = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
 			resultMessage = "ELEVATION_VALUE_EXISTS";
+
+			CPLFree(pafScanline);
 
 			if(elevation <= globalMinElevation) {
 				LOG(DEBUG) << name << "getElevationAt: Elevation value = " << elevation << " is invalid.";
@@ -588,6 +594,7 @@ private:
 	GDALDataset *demDataset;
 	OGRSpatialReference oSourceSRS; // as derived from dataset
 	OGRSpatialReference oTargetSRS; // Ours system here is WGS84
+	OGRCoordinateTransformation* poCT; // source to target transformation
 
 	/* Parameters */
 	double geoTransform[6];
