@@ -369,18 +369,18 @@ public:
 		/* prepare output */
 
 
-		if(result) {
-			outputModelAsJSON.Set("metamodel", libvariant::Variant(outputMetaModelFile));
-			brics_3d::rsg::JSONTypecaster::JSONtoString(outputModelAsJSON, outputModel);
 
-			/* validate output */
-			if (enableValidation && false) { //TODO update model
-				if(!brics_3d::rsg::JSONTypecaster::validateFunctionBlockModel(outputModelAsJSON, outputMetaModelFile, modelsDefaultPath, outputModel)) {
-					LOG(ERROR) << "DemLoader: Model validation for output model failed: " << outputModel;
-					return false;
-				}
+		outputModelAsJSON.Set("metamodel", libvariant::Variant(outputMetaModelFile));
+		brics_3d::rsg::JSONTypecaster::JSONtoString(outputModelAsJSON, outputModel);
+
+		/* validate output */
+		if (enableValidation && false) { //TODO update model
+			if(!brics_3d::rsg::JSONTypecaster::validateFunctionBlockModel(outputModelAsJSON, outputMetaModelFile, modelsDefaultPath, outputModel)) {
+				LOG(ERROR) << "DemLoader: Model validation for output model failed: " << outputModel;
+				return false;
 			}
 		}
+
 
 		return result;
 	}
