@@ -64,7 +64,7 @@ The ``demloader`` supports 3 commands:
 
 * ``LOAD_MAP``: to load a map
 * ``GET_ELEVATION``: to get elevation data for a geodetic point
-* ``GET_MIN_MAX_ELEVATION``: to get the min and max elevation for the loaded map
+* ``GET_MIN_MAX_ELEVATION``: to get the min and max elevation for the loaded map or within a sub-area.
 
 Every command has the the same basic structure:
 
@@ -109,16 +109,13 @@ The meta model for the ``input`` is defined in the file [fbx-demloader-input-sch
 }
 ```
 
-``"operationSuccess":`` will indicate if a map was successfully loaded. Multiple invocations will discart older maps.
+``"operationSuccess":`` will indicate if a map was successfully loaded. Multiple invocations will discard older maps.
 
 #### Get elevation 
 
-| Field          | Possible value   |      Description   |
-|----------------|------------------|--------------------|
-| ``"command"``  | ``"GET_ELEVATION"``   | Command to get an elevation value |
-| ``"latitude"`` | Number e.g.  ``9.849468`` | Latitude (WGS84)  |
-| ``"longitude"``| Number e.g.  ``46.812785``| Longitude (WGS84) |
 
+
+A get elevation query has the below format: 
 
 ```javascript
 {
@@ -135,13 +132,47 @@ The meta model for the ``input`` is defined in the file [fbx-demloader-input-sch
 }
 ```
 
-``"operationSuccess":`` will indicate if a valid values exists for the map. 
+The ``input`` section allows to define the following fields:
+
+| Field          | Possible value   |      Description   |
+|----------------|------------------|--------------------|
+| ``"command"``  | ``"GET_ELEVATION"``   | Command to get an elevation value |
+| ``"latitude"`` | Number e.g.  ``9.849468`` | Latitude (WGS84)  |
+| ``"longitude"``| Number e.g.  ``46.812785``| Longitude (WGS84) |
+
+A typical reply message looks like:
+
+```javascript
+{
+
+  "@worldmodeltype": "RSGFunctionBlockResult",
+  "metamodel": "rsg-functionBlock-schema.json",
+  "operation": "EXECUTE",
+  "operationSuccess": true,
+  "queryId": "af8447ca-3a3e-e4fc-95f0-5dbdf4eed3a7",
+  "output": {
+    "elevation": 1563.8599853515625, 
+    "metamodel": "fbx-demloader-output-schema.json", 
+    "result": "ELEVATION_VALUE_EXISTS"
+  }
+}
+```
+
+The header fields ``@worldmodeltype``, ``metamodel``, ``operation`` and ``queryId``  are generic and identical for every reply.
+The ``"operationSuccess":`` will indicate if a valid values exists for the map. It will be false in case of a general error (block not loaded),
+in case of an invalid pixel in the map or if a query asks for a value beyond the boundaries of the map.
+The ``output`` always carries ``"metamodel": "fbx-demloader-output-schema.json",`` to indicate how its data is modeled.
+``elevation`` is the actual elevation value/altitude in meters. The ``result`` gives further feedback for debugging purposes.
+
 
 #### Get minimum and maximum elevation
+
+The ``input`` section allows to define the following fields:
 
 | Field          | Possible value   |      Description   |
 |----------------|------------------|--------------------|
 | ``"command"``  | ``"GET_MIN_MAX_ELEVATION"``| Command to get the min/max elevation values |
+| ``"areaId"``  | ``8ce59f8e-6072-49c0-a0fc-481ee288e24b``| Id that points to area Connection to describe a closed polygon. An example to create an area in the SWM can be found [here](https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/json_api/add_area.py). |
 
 
 ```javascript
@@ -157,6 +188,25 @@ The meta model for the ``input`` is defined in the file [fbx-demloader-input-sch
 }
 ```
 
+A typical result message looks like:
 
+```javascript
+{
+  "@worldmodeltype": "RSGFunctionBlockResult",
+  "metamodel": "rsg-functionBlock-schema.json",
+  "operation": "EXECUTE",
+  "queryId": "10b20f0f-db25-0c68-9cc8-bc4a8370aab9",
+  "operationSuccess": true, 
+  "output": {
+    "metamodel": "fbx-demloader-output-schema.json"
+    "minElevation": 1558.0703125,
+    "maxElevation": 1715.953857421875, 
+    "result": "ELEVATION_VALUE_EXISTS", 
+  }
+} 
+```
+
+The output section is the same as for a get [``GET_ELEVATION``](#get-elevation) query, 
+except that the ``elevation`` field is replaced by ``minElevation`` and ``maxElevation``.
 
 
