@@ -209,4 +209,21 @@ A typical result message looks like:
 The output section is the same as for a get [``GET_ELEVATION``](#get-elevation) query, 
 except that the ``elevation`` field is replaced by ``minElevation`` and ``maxElevation``.
 
+Examples
+========
+
+The [ubx_robotscenegraph](https://github.com/blumenthal/ubx_robotscenegraph) project has a set of predefined messages that can be used as examples. 
+Please note, the ``path`` in ``demloader_load_block.json`` and the zyre configuration json file
+have to be adopted accordingly.
+
+Got to ``examples/json_api`` then invoke:
+
+```bash
+	python zyre_add.py demloader_unload_block.json ../zyre/swm_zyre_donkey.json && python zyre_add.py demloader_load_block.json ../zyre/swm_zyre_donkey.json &&  python zyre_add.py demloader_load_map.json ../zyre/swm_zyre_donkey.json
+	
+	python zyre_add.py demloader_get_elevation.json ../zyre/swm_zyre_donkey.json
+	
+	python zyre_add.py demloader_get_min_max.json ../zyre/swm_zyre_donkey.json
+```
+
 
