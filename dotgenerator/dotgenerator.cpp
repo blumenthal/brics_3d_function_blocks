@@ -37,6 +37,7 @@
 #include <brics_3d/worldModel/WorldModel.h>
 #include <brics_3d/worldModel/sceneGraph/IFunctionBlock.h>
 #include <brics_3d/worldModel/sceneGraph/DotGraphGenerator.h>
+#include <brics_3d/worldModel/sceneGraph/NodeHashTraverser.h>
 #include <brics_3d/util/JSONTypecaster.h>
 
 
@@ -150,9 +151,21 @@ public:
 		bool printRemoteRootNodes = true;
 		if(!subgraphId.isNil()) {
 			wm->scene.executeGraphTraverser(&dotGraphGenerator, subgraphId);
+			wm->scene.executeGraphTraverser(&hashTraverser, subgraphId);
+			LOG(INFO) << "Hash for subgraph with ID = " << subgraphId << " == " << hashTraverser.getHashById(subgraphId);
+			hashTraverser.reset(false);
+			wm->scene.executeGraphTraverser(&hashTraverser, subgraphId);
+			LOG(INFO) << "Hash without IDs for subgraph with ID = " << subgraphId << " == " << hashTraverser.getHashById(subgraphId);
+			LOG(INFO) << "Hash list:" << std::endl << hashTraverser.getJSON();
 			printRemoteRootNodes = false;
 		} else { // NiL = not defined/specified => as default print the whole graph
 			wm->scene.executeGraphTraverser(&dotGraphGenerator, wm->scene.getRootId());
+			wm->scene.executeGraphTraverser(&hashTraverser, wm->scene.getRootId());
+			LOG(INFO) << "Hash for subgraph with ID = " << subgraphId << " == " << hashTraverser.getHashById(wm->scene.getRootId());
+			hashTraverser.reset(false);
+			wm->scene.executeGraphTraverser(&hashTraverser, subgraphId);
+			LOG(INFO) << "Hash without IDs for subgraph with ID = " << subgraphId << " == " << hashTraverser.getHashById(subgraphId);
+			LOG(INFO) << "Hash list:" << std::endl << hashTraverser.getJSON();
 			printRemoteRootNodes = true;
 		}
 
@@ -161,6 +174,12 @@ public:
 			wm->scene.getRemoteRootNodes(remoteRootNodeIds);
 			for(vector<brics_3d::rsg::Id>::const_iterator it = remoteRootNodeIds.begin(); it != remoteRootNodeIds.end(); ++it) {
 				wm->scene.executeGraphTraverser(&dotGraphGenerator, *it);
+				wm->scene.executeGraphTraverser(&hashTraverser, *it);
+				LOG(INFO) << "Hash for subgraph with ID = " << subgraphId << " == " << hashTraverser.getHashById(*it);
+				hashTraverser.reset(false);
+				wm->scene.executeGraphTraverser(&hashTraverser, *it);
+				LOG(INFO) << "Hash without IDs for subgraph with ID = " << subgraphId << " == " << hashTraverser.getHashById(*it);
+				LOG(INFO) << "Hash list:" << std::endl << hashTraverser.getJSON();
 			}
 		}
 
@@ -174,6 +193,7 @@ public:
 		output.flush();
 		output.close();
 		dotGraphGenerator.reset();
+		hashTraverser.reset();
 
 		LOG(INFO) << "DotGenerator: Done.";
 
@@ -226,6 +246,7 @@ private:
 
 	/* Algorithm(s) */
 	brics_3d::rsg::DotGraphGenerator dotGraphGenerator;
+	brics_3d::rsg::NodeHashTraverser hashTraverser;
 
 	/* Parameters */
 
