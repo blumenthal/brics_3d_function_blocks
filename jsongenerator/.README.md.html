@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>/opt/src/sandbox/brics_3d_function_blocks/jsongenerator/.README.md.html</title>
+
+
+<style type="text/css">
+body {
+	color: #333;
+	font: 13px/1.4 Helvetica,arial,freesans,clean,sans-serif;
+}
+
+.markdown-body {
+    border: 1px solid #CACACA;
+    padding: 30px;
+    font-size: 15px;
+    line-height: 1.7;
+    word-wrap: break-word;
+}
+.markdown-body > *:first-child {
+    margin-top: 0 !important;
+}
+.markdown-body > *:last-child {
+    margin-bottom: 0 !important;
+}
+.markdown-body a.absent {
+    color: #C00;
+}
+.markdown-body a.anchor {
+    bottom: 0;
+    cursor: pointer;
+    display: block;
+    left: 0;
+    margin-left: -30px;
+    padding-left: 30px;
+    padding-right: 6px;
+    position: absolute;
+    top: 0;
+}
+.markdown-body a.anchor:focus {
+    outline: medium none;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+    cursor: text;
+    font-weight: bold;
+    line-height: 1.7;
+    margin: 1em 0 15px;
+    padding: 0;
+    position: relative;
+}
+
+.markdown-body h1 .octicon-link, .markdown-body h2 .octicon-link, .markdown-body h3 .octicon-link, .markdown-body h4 .octicon-link, .markdown-body h5 .octicon-link, .markdown-body h6 .octicon-link {
+    color: #000;
+    display: none;
+}
+.markdown-body h1:hover a.anchor, .markdown-body h2:hover a.anchor, .markdown-body h3:hover a.anchor, .markdown-body h4:hover a.anchor, .markdown-body h5:hover a.anchor, .markdown-body h6:hover a.anchor {
+    line-height: 1;
+    margin-left: -22px;
+    padding-left: 0;
+    text-decoration: none;
+    top: 15%;
+}
+.markdown-body h1:hover a.anchor .octicon-link, .markdown-body h2:hover a.anchor .octicon-link, .markdown-body h3:hover a.anchor .octicon-link, .markdown-body h4:hover a.anchor .octicon-link, .markdown-body h5:hover a.anchor .octicon-link, .markdown-body h6:hover a.anchor .octicon-link {
+    display: inline-block;
+}
+.markdown-body h1 tt, .markdown-body h1 code, .markdown-body h2 tt, .markdown-body h2 code, .markdown-body h3 tt, .markdown-body h3 code, .markdown-body h4 tt, .markdown-body h4 code, .markdown-body h5 tt, .markdown-body h5 code, .markdown-body h6 tt, .markdown-body h6 code {
+    font-size: inherit;
+}
+.markdown-body h1 {
+    border-bottom: 1px solid #DDD;
+    font-size: 2.5em;
+}
+.markdown-body h2 {
+    border-bottom: 1px solid #EEE;
+    font-size: 2em;
+}
+.markdown-body h3 {
+    font-size: 1.5em;
+}
+.markdown-body h4 {
+    font-size: 1.2em;
+}
+.markdown-body h5 {
+    font-size: 1em;
+}
+.markdown-body h6 {
+    color: #777;
+    font-size: 1em;
+}
+.markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol, .markdown-body dl, .markdown-body table, .markdown-body pre {
+    margin: 15px 0;
+}
+.markdown-body ul, .markdown-body ol {
+    padding-left: 30px;
+}
+.markdown-body ul.no-list, .markdown-body ol.no-list {
+    list-style-type: none;
+    padding: 0;
+}
+.markdown-body ul ul, .markdown-body ul ol, .markdown-body ol ol, .markdown-body ol ul {
+    margin-bottom: 0;
+    margin-top: 0;
+}
+.markdown-body dl {
+    padding: 0;
+}
+.markdown-body dl dt {
+    font-size: 14px;
+    font-style: italic;
+    font-weight: bold;
+    margin-top: 15px;
+    padding: 0;
+}
+.markdown-body dl dd {
+    margin-bottom: 15px;
+    padding: 0 15px;
+}
+.markdown-body blockquote {
+    border-left: 4px solid #DDD;
+    color: #777;
+    padding: 0 15px;
+}
+.markdown-body blockquote > *:first-child {
+    margin-top: 0;
+}
+.markdown-body blockquote > *:last-child {
+    margin-bottom: 0;
+}
+.markdown-body table {
+    display: block;
+    overflow: auto;
+    width: 100%;
+    border-collapse: collapse;
+}
+.markdown-body table th {
+    font-weight: bold;
+}
+.markdown-body table th, .markdown-body table td {
+    border: 1px solid #DDD;
+    padding: 6px 13px;
+}
+.markdown-body table tr {
+    background-color: #FFF;
+    border-top: 1px solid #CCC;
+}
+.markdown-body table tr:nth-child(2n) {
+    background-color: #F8F8F8;
+}
+.markdown-body img {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    box-sizing: border-box;
+    max-width: 100%;
+    border: 0px;
+}
+.markdown-body span.frame {
+    display: block;
+    overflow: hidden;
+}
+.markdown-body span.frame > span {
+    border: 1px solid #DDD;
+    display: block;
+    float: left;
+    margin: 13px 0 0;
+    overflow: hidden;
+    padding: 7px;
+    width: auto;
+}
+.markdown-body span.frame span img {
+    display: block;
+    float: left;
+}
+.markdown-body span.frame span span {
+    clear: both;
+    color: #333;
+    display: block;
+    padding: 5px 0 0;
+}
+.markdown-body span.align-center {
+    clear: both;
+    display: block;
+    overflow: hidden;
+}
+.markdown-body span.align-center > span {
+    display: block;
+    margin: 13px auto 0;
+    overflow: hidden;
+    text-align: center;
+}
+.markdown-body span.align-center span img {
+    margin: 0 auto;
+    text-align: center;
+}
+.markdown-body span.align-right {
+    clear: both;
+    display: block;
+    overflow: hidden;
+}
+.markdown-body span.align-right > span {
+    display: block;
+    margin: 13px 0 0;
+    overflow: hidden;
+    text-align: right;
+}
+.markdown-body span.align-right span img {
+    margin: 0;
+    text-align: right;
+}
+.markdown-body span.float-left {
+    display: block;
+    float: left;
+    margin-right: 13px;
+    overflow: hidden;
+}
+.markdown-body span.float-left span {
+    margin: 13px 0 0;
+}
+.markdown-body span.float-right {
+    display: block;
+    float: right;
+    margin-left: 13px;
+    overflow: hidden;
+}
+.markdown-body span.float-right > span {
+    display: block;
+    margin: 13px auto 0;
+    overflow: hidden;
+    text-align: right;
+}
+.markdown-body code, .markdown-body tt {
+    background-color: #F8F8F8;
+    border: 1px solid #DDD;
+    border-radius: 3px;
+    margin: 0 2px;
+    padding: 0 5px;
+}
+.markdown-body code {
+    white-space: nowrap;
+}
+.markdown-body pre > code {
+    border: medium none;
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+}
+.markdown-body .highlight pre, .markdown-body pre {
+    background-color: #F8F8F8;
+    border: 1px solid #DDD;
+    border-radius: 3px;
+    font-size: 13px;
+    line-height: 19px;
+    overflow: auto;
+    padding: 6px 10px;
+}
+.markdown-body pre code, .markdown-body pre tt {
+    border: medium none;
+    margin: 0;
+    padding: 0;
+    word-wrap: normal;
+}
+
+pre, code, tt {
+    font-family: Consolas,"Liberation Mono",Courier,monospace;
+    font-size: 12px;
+}
+
+.highlight {
+    background: #FFF;
+}
+.highlight .k,
+.highlight .o,
+.highlight .cp,
+.highlight .cs,
+.highlight .gs,
+.highlight .gu,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt,
+.highlight .nc,
+.highlight .ne,
+.highlight .nf,
+.highlight .ow {
+    font-weight: bold;
+}
+.highlight .gd,
+.highlight .gd .x,
+.highlight .gi,
+.highlight .gi .x,
+.type-csharp .highlight .nf,
+.type-csharp .highlight .nn {
+    color: #000;
+}
+.highlight .c,
+.highlight .cm,
+.highlight .c1 {
+    color: #998;
+    font-style: italic;
+}
+.highlight .err {
+    background-color: #E3D2D2;
+    color: #A61717;
+}
+.highlight .cp,
+.highlight .cs {
+    color: #999;
+}
+.highlight .cs,
+.highlight .ge {
+    font-style: italic;
+}
+.highlight .gd {
+    background-color: #FDD;
+}
+.highlight .gd .x {
+    background-color: #FAA;
+}
+.highlight .gr,
+.highlight .gt {
+    color: #A00;
+}
+.highlight .gh {
+    color: #999;
+}
+.highlight .gi {
+    background-color: #DFD;
+}
+.highlight .gi .x {
+    background-color: #AFA;
+}
+.highlight .go {
+    color: #888;
+}
+.highlight .gp,
+.highlight .nn {
+    color: #555;
+}
+.highlight .gu,
+.highlight .ni {
+    color: #800080;
+}
+.highlight .kt {
+    color: #458;
+}
+.highlight .m {
+    color: #099;
+}
+.highlight .s {
+    color: #D14;
+}
+.highlight .n {
+    color: #333;
+}
+.highlight .na,
+.highlight .no,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi {
+    color: #008080;
+}
+.highlight .nb {
+    color: #0086B3;
+}
+.highlight .nc {
+    color: #458;
+}
+.highlight .ne,
+.highlight .nf {
+    color: #900;
+}
+.highlight .nt {
+    color: #000080;
+}
+.highlight .w {
+    color: #BBB;
+}
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo {
+    color: #099;
+}
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .s1 {
+    color: #D14;
+}
+.highlight .sr {
+    color: #009926;
+}
+.highlight .ss {
+    color: #990073;
+}
+.highlight .bp {
+    color: #999;
+}
+.highlight .il {
+    color: #099;
+}
+.highlight .gc {
+    background-color: #EAF2F5;
+    color: #999;
+}
+.type-csharp .highlight .k,
+.type-csharp .highlight .kt {
+    color: #00F;
+}
+.type-csharp .highlight .nf {
+    font-weight: normal;
+}
+.type-csharp .highlight .nc {
+    color: #2B91AF;
+}
+.type-csharp .highlight .s,
+.type-csharp .highlight .sc {
+    color: #A31515;
+}
+
+</style>
+
+
+<script type="text/javascript">
+
+function getDocumentScrollTop() 
+{
+   var res = document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || 0;
+   // alert(res);
+   return res;
+}
+
+function setDocumentScrollTop(ypos) 
+{
+	window.scrollTo(0, ypos);
+}
+
+</script>
+
+
+</head>
+<body class="markdown-body">
+<h1> <a id="user-content-jsongenerator-function-block" class="anchor" href="..md.html#jsongenerator-function-block" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>jsongenerator function block</h1> 
+<p>The <code>jsongenerator</code> is a query function block to generate a RSG-JSON model file that comlies to the rsg-core schema.</p> 
+<h1> <a id="user-content-usage" class="anchor" href="..md.html#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h1> 
+<ol> 
+ <li><a href="..md.html#load-the-jsongenerator-function-block">Load the <code>jsongenerator</code> function block</a></li> 
+ <li><a href="..md.html#execute-the-jsongenerator-function-block">Execute the <code>jsongenerator</code> function block</a></li> 
+</ol> 
+<p>Note, the usage is similar to the dotgenerator. It only differs in the optional <code>fileName</code> argument that is called <code>dotFileName</code> in case for the <code>dotgenerator</code>.</p> 
+<h3> <a id="user-content-load-the-jsongenerator-function-block" class="anchor" href="..md.html#load-the-jsongenerator-function-block" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Load the <code>jsongenerator</code> function block</h3> 
+<p>As for every function block the <code>jsongenerator</code> has to be loaded before. It can also be attempted to load it multiple times, since it internally checks if it exists. Thus, it is safe (and recommended) to call it every time before performing a request. Please note the <code>path</code> has to be adopted. As best practice obtain this value from the <code>FBX_MODULES</code> environment variable.</p> 
+<p>The below message <strong>loads</strong> a <code>jsongenerator</code> as a function block:</p> 
+<div class="highlight highlight-source-js">
+ <pre>{
+  <span class="pl-s"><span class="pl-pds">&quot;</span>@worldmodeltype<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>RSGFunctionBlock<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>metamodel<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>       <span class="pl-s"><span class="pl-pds">&quot;</span>rsg-functionBlock-schema.json<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>name<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>            <span class="pl-s"><span class="pl-pds">&quot;</span>jsongenerator<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>operation<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>       <span class="pl-s"><span class="pl-pds">&quot;</span>LOAD<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>input<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> {
+    <span class="pl-s"><span class="pl-pds">&quot;</span>metamodel<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>rsg-functionBlock-path-schema.json<span class="pl-pds">&quot;</span></span>,
+    <span class="pl-s"><span class="pl-pds">&quot;</span>path<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>      <span class="pl-s"><span class="pl-pds">&quot;</span>/workspace/brics_3d_function_blocks/lib/<span class="pl-pds">&quot;</span></span>,
+    <span class="pl-s"><span class="pl-pds">&quot;</span>comment<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>   <span class="pl-s"><span class="pl-pds">&quot;</span>path is the same as the FBX_MODULES environment variable appended with a lib/ folder<span class="pl-pds">&quot;</span></span>
+  }
+}</pre>
+</div> 
+<h3> <a id="user-content-execute-the-jsongenerator-function-block" class="anchor" href="..md.html#execute-the-jsongenerator-function-block" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Execute the <code>jsongenerator</code> function block</h3> 
+<p>The <code>jsongenerator</code> essentially needs to specify as input:</p> 
+<ul> 
+ <li> <code>subgraphId</code>: <em>Optional</em> subgraph ID. The dot file will generate the graph by usign this as root node to further traverse the graph. Use an appropriate query to getreive such an it e.g. look for a node with an attribute <code>( name = swm)</code> </li> 
+ <li> <code>path</code>: <em>Optional</em> path where RGS-JSON file will be stored. If not specified, it will store it relative to the file location, the SWM has been started.</li> 
+ <li> <code>fileName</code>: <em>Optional</em> file name for the RGS-JSON files to be stored. If not specified, it will generated based on a time stamp. /.json will be the result.</li> 
+</ul> 
+<p>The meta model for the <code>input</code> is defined in the file <a href="../models/fbx-subgraph-and-file-schema.json">fbx-subgraph-and-file-schema.json</a> and can be used as a reference.</p> 
+<p>The other fields like <code>@worldmodeltype</code> or <code>metamodel</code> comply the general function block model and are always the same for a <code>jsongenerator</code> query.</p> 
+<div class="highlight highlight-source-js">
+ <pre>{
+  <span class="pl-s"><span class="pl-pds">&quot;</span>@worldmodeltype<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>RSGFunctionBlock<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>metamodel<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>       <span class="pl-s"><span class="pl-pds">&quot;</span>rsg-functionBlock-schema.json<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>name<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>            <span class="pl-s"><span class="pl-pds">&quot;</span>jsongenerator<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>operation<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span>       <span class="pl-s"><span class="pl-pds">&quot;</span>EXECUTE<span class="pl-pds">&quot;</span></span>,
+  <span class="pl-s"><span class="pl-pds">&quot;</span>input<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> {
+    <span class="pl-s"><span class="pl-pds">&quot;</span>metamodel<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>fbx-subgraph-and-file-schema.json<span class="pl-pds">&quot;</span></span>,
+    <span class="pl-s"><span class="pl-pds">&quot;</span>subgraphId<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>e379121f-06c6-4e21-ae9d-ae78ec1986a1<span class="pl-pds">&quot;</span></span>,
+    <span class="pl-s"><span class="pl-pds">&quot;</span>path<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>/tmp/<span class="pl-pds">&quot;</span></span>,
+    <span class="pl-s"><span class="pl-pds">&quot;</span>fileName<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>rsg_snapshot_1<span class="pl-pds">&quot;</span></span>
+  }
+} </pre>
+</div> 
+<p>The <code>output</code> contains a field <code>file</code> to report back to which file the got grapgh has been written to. The file <a href="../models/fbx-file-schema.json">fbx-file-schema.json</a> and can be used as a reference to retrieve the output.</p> 
+<p>Please note <code>&quot;operationSuccess&quot;:</code> will indicate if a block was successfully executed. If yes it will be set to <code>true</code>. If not, there is either a syntax error or some if the ids do not exist.</p> 
+<div class="highlight highlight-source-js">
+ <pre>{
+  <span class="pl-s"><span class="pl-pds">&quot;</span>@worldmodeltype<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>RSGFunctionBlockResult<span class="pl-pds">&quot;</span></span>, 
+  <span class="pl-s"><span class="pl-pds">&quot;</span>operationSuccess<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-c1">true</span>, 
+  <span class="pl-s"><span class="pl-pds">&quot;</span>operation<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>EXECUTE<span class="pl-pds">&quot;</span></span>, 
+  <span class="pl-s"><span class="pl-pds">&quot;</span>metamodel<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>rsg-functionBlock-schema.json<span class="pl-pds">&quot;</span></span>, 
+  <span class="pl-s"><span class="pl-pds">&quot;</span>output<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> {
+    <span class="pl-s"><span class="pl-pds">&quot;</span>file<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>/tmp/rsg_snapshot_1.json<span class="pl-pds">&quot;</span></span>, 
+    <span class="pl-s"><span class="pl-pds">&quot;</span>metamodel<span class="pl-pds">&quot;</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">&quot;</span>fbx-file-schema.json<span class="pl-pds">&quot;</span></span>
+  }
+} 
+</pre>
+</div>
+</body>
+</html>

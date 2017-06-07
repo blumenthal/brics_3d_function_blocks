@@ -2,7 +2,7 @@
   "id": "fbx-subgraph-and-file-schema.json",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title" : "Schema for dot dotgenerator.",
-  "description": "Input data model for dotgenerator function block.",
+  "description": "Input data model for dotgenerator and jsongenrator function blocks.",
   "type": "object",
   
   "properties": {
@@ -18,9 +18,13 @@
       "type": "string",
       "description": "Optional path where dot file will be stored. If not specified, it will store it relative to the file location, the SWM has been started."
      },
+     "fileName": { 
+      "type": "string",
+      "description": "Optional file name for the files to be stored."
+     },
      "dotFileName": { 
       "type": "string",
-      "description": "Optional file name for the dot files to be stored. If not specified, it will generated based on a time stamp. <path>/<dotFileName.gv> will be the result."
+      "description": "Optional file name for a dot files to be stored. If not specified, it will generated based on a time stamp. <path>/<dotFileName.gv> will be the result."
      }
   },
   
