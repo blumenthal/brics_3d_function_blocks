@@ -19,6 +19,22 @@
         "file": { 
           "type": "string",
           "description": "File path and name."
+        },
+        "type": { 
+          "enum": [ "DEM", "UNITY" ],
+          "description": "Sets the map type. DEM means a regular DEM file, while UNITY loads a heightmap as uses by the unity game engine. The latter can be used in cases a simulation is used. Default is DEM."
+        },
+        "xRangeInMeters": {
+       		"type": "number",
+          "description": "X dimension of the bounding box in meters."
+        },
+        "yRangeInMeters": {
+       		"type": "number",
+          "description": "Y dimension of the bounding box in meters."
+        },
+        "zRangeInMeters": {
+       		"type": "number",
+          "description": "Z dimension of the bounding box in meters."
         }
       },
       
