@@ -71,6 +71,11 @@ public:
 		oTargetSRS.SetWellKnownGeogCS("WGS84");
 		poCT = 0;
 
+		type = "DEM";
+		xRangeInMeters = 0;
+		yRangeInMeters = 0;
+		zRangeInMeters = 0;
+
 		/*
 		 * Values below -10,971 [m] Are not plausible since this is the absolute minimum on earth.
 		 * Use to determine invalid points.
@@ -142,6 +147,25 @@ public:
 
 			string demFile = inputModelAsJSON.Get("file").AsString();
 
+			if(inputModelAsJSON.Contains("type")) { // optional
+				type = inputModelAsJSON.Get("type").AsString();
+				if (type.compare("UNITY") == 0) {
+					if(inputModelAsJSON.Contains("xRangeInMeters")) { // optional
+						xRangeInMeters = inputModelAsJSON.Get("xRangeInMeters").AsDouble();
+					}
+					if(inputModelAsJSON.Contains("xRangeInMeters")) { // optional
+						yRangeInMeters = inputModelAsJSON.Get("yRangeInMeters").AsDouble();
+					}
+					if(inputModelAsJSON.Contains("xRangeInMeters")) { // optional
+						zRangeInMeters = inputModelAsJSON.Get("zRangeInMeters").AsDouble();
+					}
+				}
+				LOG(INFO) << "DemLoader: Using UNITY type with domensions ("
+						<< xRangeInMeters << ", "
+						<< yRangeInMeters << ", "
+						<< zRangeInMeters << ") in [m].";
+			}
+
 		    GDALAllRegister();
 		    demDataset = (GDALDataset *) GDALOpen( demFile.c_str(), GA_ReadOnly );
 		    if(demDataset) {
@@ -163,6 +187,7 @@ public:
 		    				geoTransform[1], geoTransform[5] );
 		    	}
 
+
 		    	/*
 		    	 * Get geo coordinate system for meta data of the file.
 		    	 * E.g. the Davos map uses EPSG:21781 while the Chamoluc map has WGS84
@@ -177,6 +202,7 @@ public:
 
 
 				poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
+				LOG(DEBUG) << "DemLoader: poCT = " << poCT;
 
 		    	/* access band */
 		    	GDALRasterBand  *poBand;
@@ -207,8 +233,25 @@ public:
 		    	 demMaxPixelSizeY = poBand->GetYSize();
 
 
+//		    	 The map's dimensions as a bounding box: e.g. 5.2kmx5.2kmx1.1km. So the resolution of such maps can be calculated by simply dividing pixel numbers by map size:
+//
+//		    	 Resolution_x = x_pixelsize / 5.2km
+//		    	 Resolution_y = y_pixelsize / 5.2km
+//		    	 Resolution_z = 2^8(grayscale range)  / 1.1km
+		    	 if(type.compare("UNITY") == 0) {
+		    		 // translation
+		    		 geoTransform[0] = 0; // upper left corner?
+		    		 geoTransform[3] = 0;
 
-		    	if(poBand->GetRasterDataType() != GDT_Float32) {
+		    		 //scale (Pixel Size)
+		    		 geoTransform[1] = demMaxPixelSizeX / xRangeInMeters;
+		    		 geoTransform[5] = demMaxPixelSizeY / yRangeInMeters;
+
+		    		 demMinElevation =  demMinElevation / std::numeric_limits<uint16_t>::max()  *  zRangeInMeters;
+		    		 demMaxElevation =  demMaxElevation / std::numeric_limits<uint16_t>::max()  * zRangeInMeters;
+		    	 }
+
+		    	if((poBand->GetRasterDataType() != GDT_Float32) && (poBand->GetRasterDataType() != GDT_UInt16)) {
 				    GDALClose((GDALDataset *) demDataset);
 					demDataset = 0;
 		    		result = false;
@@ -232,10 +275,11 @@ public:
 					pixelToWorld(xPixel, yPixel, xGeo, yGeo);
 					worldToPixel(xGeo, yGeo, xPixel, yPixel);
 
+			    	result = true;
+					outputModelAsJSON.Set("result", "DEM_FILE_LOADED");
 		    	}
 
-		    	result = true;
-				outputModelAsJSON.Set("result", "DEM_FILE_LOADED");
+
 		    }
 
 
@@ -420,9 +464,11 @@ private:
 		/* Coordinate to coordinate transform */
 		//LOG(DEBUG) << name << "pixelToWorld: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 		//OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oTargetSRS, &oSourceSRS);
-		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
-			LOG(ERROR) << name << "pixelToWorld: Transformation failed.";
-			return false;
+		if( poCT != 0) {
+			if(!poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
+				LOG(ERROR) << name << "pixelToWorld: Transformation failed.";
+				return false;
+			}
 		}
 		//LOG(DEBUG) << name << "pixelToWorld: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 
@@ -438,9 +484,11 @@ private:
 		/* Coordinate to coordinate transform */
 		LOG(DEBUG) << name << "worldToPixel: non-transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 		OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
-		if( poCT == 0 || !poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
-			LOG(ERROR) << name << "worldToPixel: Transformation failed.";
-			return false;
+		if(poCT != 0) {
+				if(!poCT->Transform( 1, &xGeo, &yGeo )) { // NOTE: this is an in place modification
+					LOG(ERROR) << name << "worldToPixel: Transformation failed.";
+					return false;
+				}
 		}
 		LOG(DEBUG) << name << "worldToPixel: transformed geolocation at (" << xGeo << ", " << yGeo << ").";
 
@@ -493,6 +541,13 @@ private:
 	    	elevation = pafScanline[xPixel];
 	    	LOG(DEBUG) << name << "getElevationAt: Found elevation value = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
 			resultMessage = "ELEVATION_VALUE_EXISTS";
+
+	    	 if(type.compare("UNITY") == 0) {
+	    		 //Resolution_z = 2^8(grayscale range)  / 1.1km
+//	    		 elevation =  elevation * 256  / zRangeInMeters;
+	    		 elevation =  elevation / std::numeric_limits<uint16_t>::max()  *  zRangeInMeters;
+	    		 LOG(DEBUG) << name << "getElevationAt:\t Scaled to UNITY elevation = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
+	    	 }
 
 			CPLFree(pafScanline);
 
@@ -604,6 +659,10 @@ private:
 	int demMaxPixelSizeX;
 	int demMaxPixelSizeY;
 	int demBandIndex;
+	string type;
+	double xRangeInMeters;
+	double yRangeInMeters;
+	double zRangeInMeters;
 
 };
 
