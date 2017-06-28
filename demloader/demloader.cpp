@@ -160,7 +160,7 @@ public:
 						zRangeInMeters = inputModelAsJSON.Get("zRangeInMeters").AsDouble();
 					}
 				}
-				LOG(INFO) << "DemLoader: Using UNITY type with domensions ("
+				LOG(INFO) << "DemLoader: Using UNITY type with dimensions ("
 						<< xRangeInMeters << ", "
 						<< yRangeInMeters << ", "
 						<< zRangeInMeters << ") in [m].";
@@ -238,17 +238,27 @@ public:
 //		    	 Resolution_x = x_pixelsize / 5.2km
 //		    	 Resolution_y = y_pixelsize / 5.2km
 //		    	 Resolution_z = 2^8(grayscale range)  / 1.1km
+//
+// 				 https://docs.unrealengine.com/udk/Three/TerrainHeightmaps.html
+//		 		xGeo = geoTransform[0] + xPixel*geoTransform[1] + yPixel*geoTransform[2];
+//		     	yGeo = geoTransform[3] + xPixel*geoTransform[4] + yPixel*geoTransform[5];
+
+
 		    	 if(type.compare("UNITY") == 0) {
 		    		 // translation
 		    		 geoTransform[0] = 0; // upper left corner?
 		    		 geoTransform[3] = 0;
 
 		    		 //scale (Pixel Size)
-		    		 geoTransform[1] = demMaxPixelSizeX / xRangeInMeters;
-		    		 geoTransform[5] = demMaxPixelSizeY / yRangeInMeters;
+//		    		 geoTransform[1] = geoTransform[4] = demMaxPixelSizeX / xRangeInMeters;
+//		    		 geoTransform[5] = geoTransform[5] = demMaxPixelSizeY / yRangeInMeters;
+		    		 geoTransform[1] = xRangeInMeters / demMaxPixelSizeX;
+		    		 geoTransform[5] = yRangeInMeters / demMaxPixelSizeY;
 
-		    		 demMinElevation =  demMinElevation / std::numeric_limits<uint16_t>::max()  *  zRangeInMeters;
-		    		 demMaxElevation =  demMaxElevation / std::numeric_limits<uint16_t>::max()  * zRangeInMeters;
+//		    		 demMinElevation =  demMinElevation / std::numeric_limits<uint16_t>::max()  * zRangeInMeters;
+//		    		 demMaxElevation =  demMaxElevation / std::numeric_limits<uint16_t>::max()  * zRangeInMeters;
+		    		 demMinElevation = unityMapToElevation(demMinElevation);
+		    		 demMaxElevation = unityMapToElevation(demMaxElevation);
 		    	 }
 
 		    	if((poBand->GetRasterDataType() != GDT_Float32) && (poBand->GetRasterDataType() != GDT_UInt16)) {
@@ -274,6 +284,12 @@ public:
 					double yGeo = 0;
 					pixelToWorld(xPixel, yPixel, xGeo, yGeo);
 					worldToPixel(xGeo, yGeo, xPixel, yPixel);
+
+
+			    	double elevation = -1.0;
+			    	string resultMessage = "";
+			    	getElevationAt(xGeo, yGeo, elevation, resultMessage);
+			    	LOG(INFO) << name << " Elevation at (" <<  xGeo << ", " << yGeo << ") = " << elevation;
 
 			    	result = true;
 					outputModelAsJSON.Set("result", "DEM_FILE_LOADED");
@@ -394,6 +410,97 @@ public:
 		    		outputModelAsJSON.Set("minElevation", demMinElevation);
 		    		outputModelAsJSON.Set("maxElevation", demMaxElevation);
 		    		result = true;
+
+		    		static bool convertToPointCloud = true;
+		    		if(convertToPointCloud) {
+		    			LOG(DEBUG) << name << " Converting DEM to a into a point cloud";
+
+			    		brics_3d::rsg::Id originId;
+			    		vector<brics_3d::rsg::Attribute> attributes;
+			    		vector<brics_3d::rsg::Id> ids;
+			    		attributes.push_back(brics_3d::rsg::Attribute("gis:origin", "wgs84"));
+			    		wm->scene.getNodes(attributes, ids);
+			    		if (ids.size() > 0) {
+			    			originId = ids[0];
+			    		} else {
+			    			LOG(WARNING) << name << "No gis origin found. Using the root node instead.";
+			    			originId = wm->getRootNodeId(); // Fall back to root node
+			    		}
+
+		    			/* prepare point cloud */
+			    		brics_3d::rsg::Id pcId;
+		    			brics_3d::PointCloud3D::PointCloud3DPtr pointCloud(new brics_3d::PointCloud3D());
+		    			LOG(DEBUG) << name << " Size of point cloud : " << pointCloud->getSize();
+
+
+
+
+
+		    	    	/* access band */
+		    			GDALRasterBand  *poBand;
+		    			uint8_t *pafScanline;
+		    			poBand = demDataset->GetRasterBand(demBandIndex);
+
+		    			/* read it */
+		    			double x,y,z= 0;
+		    			for (int yPixel = 0; yPixel < demMaxPixelSizeY; ++yPixel) { // line by line
+
+		    				pafScanline = (uint8_t *) CPLMalloc(sizeof(uint8_t)*demMaxPixelSizeX); // no ownership
+		    				poBand->RasterIO( GF_Read, 0, yPixel, demMaxPixelSizeX, 1,
+		    						pafScanline, demMaxPixelSizeX, 1, GDT_Byte /* poBand->GetRasterDataType()*/,
+		    						0, 0 );
+
+		    				for (int xPixel = 0; xPixel < demMaxPixelSizeX; ++xPixel) { // pixel by pixel
+
+
+		    					double elevation = static_cast<double>(pafScanline[xPixel]);
+		    			    	if(type.compare("UNITY") == 0) {
+
+		    			    		 elevation = unityMapToElevation(elevation);
+		    			    		 LOG(DEBUG) << name << "\t UNITY elevation = " << elevation << " at pixel (" << xPixel << ", " << yPixel << ") scaled to " << static_cast<double>(pafScanline[xPixel]);
+		    			    	}
+		    					z = elevation;
+		    					if(pixelToWorld(xPixel, yPixel, x, y)) {
+
+		    						if ((yPixel % 100 == 0)) {// subsample
+		    							LOG(DEBUG) << name << "\t Point3D(" << x << "," << y << "," << z << ")";
+		    							if (elevation >= 0 && elevation <= zRangeInMeters) {
+
+//		    								pointCloud->addPoint(brics_3d::Point3D(x/1000.0,y/1000.0,z/1000.0));
+		    								pointCloud->addPoint(brics_3d::Point3D(xPixel/1000.0,yPixel/1000.0,pafScanline[xPixel]/1000.0));
+		    							}
+		    						}
+//		    						if (elevation >= 0 && elevation <= zRangeInMeters) {
+//		    							pointCloud->addPoint(brics_3d::Point3D(x,y,z));
+//		    						}
+		    					}
+
+
+
+		    				}
+
+		    				CPLFree(pafScanline);
+		    			}
+
+
+		    			LOG(INFO) << name << " Size of point cloud : " << pointCloud->getSize();
+		    			brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>::PointCloudPtr pcContainer(new brics_3d::rsg::PointCloud<brics_3d::PointCloud3D>());
+		    			pcContainer->data = pointCloud;
+		    			attributes.clear();
+		    			attributes.push_back(brics_3d::rsg::Attribute("name","dem_point_cloud"));
+		    			attributes.push_back(brics_3d::rsg::Attribute("producer","demloader"));
+		    			wm->scene.addGeometricNode(originId, pcId, attributes, pcContainer, brics_3d::rsg::TimeStamp(0.0));
+
+		    		    /* place  the camera for the visualizer, based on the last loaded node  */
+		    		    brics_3d::rsg::Id camearaId;
+		    		    vector<brics_3d::rsg::Attribute> cameraAttributes;
+		    		    cameraAttributes.push_back(brics_3d::rsg::Attribute("osg:camera","home"));
+//		    		    cameraAttributes.push_back(brics_3d::rsg::Attribute("tf:type","wgs84")); // we are in Cartesian space.
+		    		    brics_3d::HomogeneousMatrix44::IHomogeneousMatrix44Ptr poseOfCamera(new brics_3d::HomogeneousMatrix44(1,0,0, 0,1,0, 0,0,1, x,y,z));
+//		    		    wm->scene.addTransformNode(originId, camearaId, cameraAttributes, poseOfCamera, wm->now());
+
+		    			convertToPointCloud = false; //at most once
+		    		}
 		    	}
 
 		    	if(result) {
@@ -538,14 +645,23 @@ private:
 	    			pafScanline, nXSize, 1, poBand->GetRasterDataType(),
 	    			0, 0 );
 
-	    	elevation = pafScanline[xPixel];
+//	    	uint16_t *pafScanline;
+//	    	int   nXSize = poBand->GetXSize();
+//	    	int line = yPixel;
+//	    	pafScanline = (uint16_t *) CPLMalloc(sizeof(uint16_t)*nXSize);
+//	    	poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
+//	    			pafScanline, nXSize, 1, GDT_UInt16,
+//	    			0, 0 );
+
+	    	elevation = static_cast<double>(pafScanline[xPixel]);
 	    	LOG(DEBUG) << name << "getElevationAt: Found elevation value = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
 			resultMessage = "ELEVATION_VALUE_EXISTS";
 
 	    	 if(type.compare("UNITY") == 0) {
 	    		 //Resolution_z = 2^8(grayscale range)  / 1.1km
 //	    		 elevation =  elevation * 256  / zRangeInMeters;
-	    		 elevation =  elevation / std::numeric_limits<uint16_t>::max()  *  zRangeInMeters;
+//	    		 elevation =  elevation / std::numeric_limits<uint16_t>::max()  *  zRangeInMeters;
+	    		 elevation = unityMapToElevation(elevation);
 	    		 LOG(DEBUG) << name << "getElevationAt:\t Scaled to UNITY elevation = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
 	    	 }
 
@@ -637,6 +753,11 @@ private:
 		  }
 
 		  return oddNodes;
+	}
+
+	double unityMapToElevation(double unityElevation) {
+//		return  unityElevation / std::numeric_limits<uint16_t>::max() * zRangeInMeters;
+		return  unityElevation * 256/*to*/ *  zRangeInMeters / 256;
 	}
 
 	/* Meta data */
