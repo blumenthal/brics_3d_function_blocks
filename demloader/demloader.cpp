@@ -45,6 +45,9 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
+/* types for UNITY maps */
+typedef uint16_t unity_pixel_t;
+
 /***********FBX***************/
 
 
@@ -288,7 +291,11 @@ public:
 
 			    	double elevation = -1.0;
 			    	string resultMessage = "";
-			    	getElevationAt(xGeo, yGeo, elevation, resultMessage);
+			    	getElevationAt(xGeo, yGeo, elevation, resultMessage); //0, 0 -> 63
+			    	LOG(INFO) << name << " Elevation at (" <<  xGeo << ", " << yGeo << ") = " << elevation;
+			    	getElevationAt(66, 40, elevation, resultMessage); //51, 31 -> 63
+			    	LOG(INFO) << name << " Elevation at (" <<  xGeo << ", " << yGeo << ") = " << elevation;
+			    	getElevationAt(2600, 2600, elevation, resultMessage); //center (?) 2023, 2032 -> 16
 			    	LOG(INFO) << name << " Elevation at (" <<  xGeo << ", " << yGeo << ") = " << elevation;
 
 			    	result = true;
@@ -438,48 +445,56 @@ public:
 
 		    	    	/* access band */
 		    			GDALRasterBand  *poBand;
-		    			uint8_t *pafScanline;
+		    			unity_pixel_t *pafUnityScanline;
+		    			float *pafScanline;
 		    			poBand = demDataset->GetRasterBand(demBandIndex);
 
 		    			/* read it */
 		    			double x,y,z= 0;
+		    			double elevation = 0;
 		    			for (int yPixel = 0; yPixel < demMaxPixelSizeY; ++yPixel) { // line by line
 
-		    				pafScanline = (uint8_t *) CPLMalloc(sizeof(uint8_t)*demMaxPixelSizeX); // no ownership
-		    				poBand->RasterIO( GF_Read, 0, yPixel, demMaxPixelSizeX, 1,
-		    						pafScanline, demMaxPixelSizeX, 1, GDT_Byte /* poBand->GetRasterDataType()*/,
-		    						0, 0 );
+		    				if(type.compare("UNITY") == 0) {
+		    					pafUnityScanline = (unity_pixel_t *) CPLMalloc(sizeof(unity_pixel_t)*demMaxPixelSizeX); // no ownership
+								poBand->RasterIO( GF_Read, 0, yPixel, demMaxPixelSizeX, 1,
+										pafUnityScanline, demMaxPixelSizeX, 1, GDT_UInt16,
+										0, 0 );
+		    				} else {
+			    				pafScanline = (float *) CPLMalloc(sizeof(float)*demMaxPixelSizeX); // no ownership
+			    				poBand->RasterIO( GF_Read, 0, yPixel, demMaxPixelSizeX, 1,
+			    						pafScanline, demMaxPixelSizeX, 1, poBand->GetRasterDataType(),
+			    						0, 0 );
+		    				}
 
 		    				for (int xPixel = 0; xPixel < demMaxPixelSizeX; ++xPixel) { // pixel by pixel
 
 
-		    					double elevation = static_cast<double>(pafScanline[xPixel]);
 		    			    	if(type.compare("UNITY") == 0) {
-
-		    			    		 elevation = unityMapToElevation(elevation);
-		    			    		 LOG(DEBUG) << name << "\t UNITY elevation = " << elevation << " at pixel (" << xPixel << ", " << yPixel << ") scaled to " << static_cast<double>(pafScanline[xPixel]);
+		    			    		float unityElevation = static_cast<float>(pafUnityScanline[xPixel]);
+		    			    		unityElevation = unityElevation/256; // workaround for issue with  PNG driver
+		    			    		elevation = unityMapToElevation(unityElevation);
+//		    			    		LOG(DEBUG) << name << "\t UNITY elevation = " << unityElevation << " at pixel (" << xPixel << ", " << yPixel << ") scaled from " << static_cast<double>(pafUnityScanline[xPixel]);
+		    			    	} else {
+		    			    		elevation = static_cast<double>(pafScanline[xPixel]);
 		    			    	}
 		    					z = elevation;
 		    					if(pixelToWorld(xPixel, yPixel, x, y)) {
 
-		    						if ((yPixel % 100 == 0)) {// subsample
-		    							LOG(DEBUG) << name << "\t Point3D(" << x << "," << y << "," << z << ")";
+		    						if ((yPixel % 50 == 0)) {// subsample
+//		    							LOG(DEBUG) << name << "\t Point3D(" << x << "," << y << "," << z << ")";
 		    							if (elevation >= 0 && elevation <= zRangeInMeters) {
-
-//		    								pointCloud->addPoint(brics_3d::Point3D(x/1000.0,y/1000.0,z/1000.0));
-		    								pointCloud->addPoint(brics_3d::Point3D(xPixel/1000.0,yPixel/1000.0,pafScanline[xPixel]/1000.0));
+		    								pointCloud->addPoint(brics_3d::Point3D(x/1000.0,y/1000.0,z/100.0));
 		    							}
 		    						}
-//		    						if (elevation >= 0 && elevation <= zRangeInMeters) {
-//		    							pointCloud->addPoint(brics_3d::Point3D(x,y,z));
-//		    						}
 		    					}
-
-
 
 		    				}
 
-		    				CPLFree(pafScanline);
+		    				if(type.compare("UNITY") == 0) {
+		    					CPLFree(pafUnityScanline);
+		    				} else {
+		    					CPLFree(pafScanline);
+		    				}
 		    			}
 
 
@@ -635,37 +650,35 @@ private:
 		if(demDataset) {
 	    	GDALRasterBand  *poBand;
 	    	poBand = demDataset->GetRasterBand(demBandIndex);
+			int nXSize = poBand->GetXSize();
+			int line = yPixel;
 
-	    	/* read it */
-	    	float *pafScanline;
-	    	int   nXSize = poBand->GetXSize();
-	    	int line = yPixel;
-	    	pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
-	    	poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
-	    			pafScanline, nXSize, 1, poBand->GetRasterDataType(),
-	    			0, 0 );
+	    	if(type.compare("UNITY") == 0) {
 
-//	    	uint16_t *pafScanline;
-//	    	int   nXSize = poBand->GetXSize();
-//	    	int line = yPixel;
-//	    	pafScanline = (uint16_t *) CPLMalloc(sizeof(uint16_t)*nXSize);
-//	    	poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
-//	    			pafScanline, nXSize, 1, GDT_UInt16,
-//	    			0, 0 );
+				/* read it */
+				unity_pixel_t *pafScanline;
+				pafScanline = (unity_pixel_t *) CPLMalloc(sizeof(unity_pixel_t)*nXSize);
+				poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
+						pafScanline, nXSize, 1, GDT_UInt16,
+						0, 0 );
+				elevation = static_cast<float>(pafScanline[xPixel]/256); // GDAL does not use the intended PNG driver; it deduces 16bit, which is not the case - it is 8bit
+	    		elevation = unityMapToElevation(elevation);
+	    		LOG(DEBUG) << name << "getElevationAt:\t Scaled to UNITY elevation = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
 
-	    	elevation = static_cast<double>(pafScanline[xPixel]);
+				CPLFree(pafScanline);
+
+	    	} else {
+				float *pafScanline;
+				pafScanline = (float *) CPLMalloc(sizeof(float)*nXSize);
+				poBand->RasterIO( GF_Read, 0, line, nXSize, 1,
+						pafScanline, nXSize, 1, poBand->GetRasterDataType(),
+						0, 0 );
+		    	elevation = static_cast<float>(pafScanline[xPixel]);
+		    	CPLFree(pafScanline);
+	    	}
+
 	    	LOG(DEBUG) << name << "getElevationAt: Found elevation value = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
 			resultMessage = "ELEVATION_VALUE_EXISTS";
-
-	    	 if(type.compare("UNITY") == 0) {
-	    		 //Resolution_z = 2^8(grayscale range)  / 1.1km
-//	    		 elevation =  elevation * 256  / zRangeInMeters;
-//	    		 elevation =  elevation / std::numeric_limits<uint16_t>::max()  *  zRangeInMeters;
-	    		 elevation = unityMapToElevation(elevation);
-	    		 LOG(DEBUG) << name << "getElevationAt:\t Scaled to UNITY elevation = " << elevation << " at geolocation (" << xGeo << ", " << yGeo << ")";
-	    	 }
-
-			CPLFree(pafScanline);
 
 			if(elevation <= globalMinElevation) {
 				LOG(DEBUG) << name << "getElevationAt: Elevation value = " << elevation << " is invalid.";
@@ -757,7 +770,8 @@ private:
 
 	double unityMapToElevation(double unityElevation) {
 //		return  unityElevation / std::numeric_limits<uint16_t>::max() * zRangeInMeters;
-		return  unityElevation * 256/*to*/ *  zRangeInMeters / 256;
+//		return  unityElevation * 256/*to*/ *  zRangeInMeters / 256;
+		return unityElevation;
 	}
 
 	/* Meta data */
