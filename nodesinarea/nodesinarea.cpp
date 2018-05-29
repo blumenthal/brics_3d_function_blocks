@@ -26,8 +26,6 @@
  *
  */
 
-#define DEBUG 1
-#define BRICS_MICROBLX_ENABLE
 
 /* std includes */
 #include <iostream>
@@ -230,7 +228,7 @@ private:
 
 	bool pointInPolygon(vector<brics_3d::Point3D> polygonPoints, double  x, double y) {
 
-	  int   i;
+	  unsigned int   i;
 	  int j=polygonPoints.size()-1;
 	  bool  oddNodes=false;
 
