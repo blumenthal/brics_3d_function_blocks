@@ -21,23 +21,40 @@ ADD_DEFINITIONS(-DFBX_MODELS_DIR="${CMAKE_HOME_DIRECTORY}/models") # folder for 
 
 OPTION(USE_OSG "Enable Open Scene Graph" OFF) #there are still some issues with the clang compiler
 OPTION(USE_FBX "Enable Function Blocks" OFF) # to avoid be abele to break cyclic dependencies.
+OPTION(USE_UBX "Enable Microblox Support" ON) # only for backward compatibility
 
-ADD_SUBDIRECTORY(./types/rsg)
+# "old" function blocks that have a dependency to Microblox
+IF(USE_UBX)
+    ADD_SUBDIRECTORY(./types/rsg)
+    
+    IF(USE_FBX)
+        ADD_SUBDIRECTORY(./testblock)
+        ADD_SUBDIRECTORY(./roifilter)
+        ADD_SUBDIRECTORY(./posehistory)
+        ADD_SUBDIRECTORY(./octreefilter)
+
+        IF(USE_OSG)
+            ADD_SUBDIRECTORY(./pointcloudloader)
+            #ADD_SUBDIRECTORY(./osgvisualizer) # != clang++
+        ENDIF(USE_OSG)
+        ADD_SUBDIRECTORY(./osmloader)
+
+    ENDIF(USE_FBX)
+    
+ENDIF(USE_UBX)
+
+# "new" function blocks that have no furhter dependency
 IF(USE_FBX)
-    ADD_SUBDIRECTORY(./testblock)
-    ADD_SUBDIRECTORY(./roifilter)
-    ADD_SUBDIRECTORY(./posehistory)
     ADD_SUBDIRECTORY(./poselist)
+    ADD_SUBDIRECTORY(./dotgenerator)
     ADD_SUBDIRECTORY(./nodesinarea)
-    ADD_SUBDIRECTORY(./octreefilter)
+    ADD_SUBDIRECTORY(./jsongenerator)
+    IF(USE_OSG)
+        ADD_SUBDIRECTORY(./osgvisualizer)
+    ENDIF(USE_OSG)
+    
+    #monitor blocks
     ADD_SUBDIRECTORY(./onattributechange)
     ADD_SUBDIRECTORY(./oncreate)
-    ADD_SUBDIRECTORY(./dotgenerator)
-    IF(USE_OSG)
-        ADD_SUBDIRECTORY(./pointcloudloader)
-        #ADD_SUBDIRECTORY(./osgvisualizer) # != clang++
-    ENDIF(USE_OSG)
-    ADD_SUBDIRECTORY(./osmloader)
-    ADD_SUBDIRECTORY(./demloader)
-    ADD_SUBDIRECTORY(./jsongenerator)
+    
 ENDIF(USE_FBX)
