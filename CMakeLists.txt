@@ -52,9 +52,10 @@ IF(USE_FBX)
     IF(USE_OSG)
         ADD_SUBDIRECTORY(./osgvisualizer)
     ENDIF(USE_OSG)
+    ADD_SUBDIRECTORY(./iosmloader)
     
     #monitor blocks
     ADD_SUBDIRECTORY(./onattributechange)
     ADD_SUBDIRECTORY(./oncreate)
-    
+   
 ENDIF(USE_FBX)
