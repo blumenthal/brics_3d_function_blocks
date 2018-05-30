@@ -399,7 +399,7 @@ private:
 	        //tags are in the child nodes
 	        DOMNodeList* childs = current->getChildNodes();
 
-	        for (int j = 0; j < childs->getLength(); ++j) {
+	        for (unsigned int j = 0; j < childs->getLength(); ++j) {
 	        	currentChild = childs->item(j);
 	        	childAttributesList =  currentChild->getAttributes();
 
