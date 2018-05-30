@@ -360,7 +360,7 @@ private:
 		double y = -1.0;
 		double z = 0.0;
 
-	    for (int i = 0; i < osmNodes->getLength(); ++i) {
+	    for (unsigned int i = 0; i < osmNodes->getLength(); ++i) {
 	    	unsigned int id = 0;
 	    	double lon = -1.0;
 	    	double lat = -1.0;
@@ -493,7 +493,7 @@ private:
 	     */
 	    DOMNodeList* wayNodes = doc->getElementsByTagName(wayName);
 
-	    for (int i = 0; i < wayNodes->getLength(); ++i) {
+	    for (unsigned int i = 0; i < wayNodes->getLength(); ++i) {
 	    	unsigned int id = 0;
 
 	        current = wayNodes->item(i);
@@ -517,7 +517,7 @@ private:
 	        DOMNodeList* childs = current->getChildNodes();
 
 
-	         for (int j = 0; j < childs->getLength(); ++j) {
+	         for (unsigned int j = 0; j < childs->getLength(); ++j) {
 	         	currentChild = childs->item(j);
 	         	childAttributesList =  currentChild->getAttributes();
 
@@ -585,7 +585,7 @@ private:
 	        	 brics_3d::rsg::Mesh<brics_3d::ITriangleMesh>::MeshPtr newMeshContainer(new brics_3d::rsg::Mesh<brics_3d::ITriangleMesh>());
 	        	 newMeshContainer->data = newMesh;
 
-	        	 for (int i = 1; i < nodeReferences.size(); ++i) {
+	        	 for (unsigned int i = 1; i < nodeReferences.size(); ++i) {
 	        		 currentNode = nodeReferences[i];
 	        		 double x1, y1, x2, y2;
 	        		 if( wm->scene.getTransformForNode(lastNode, originId, wm->now(), resultTf)) {
