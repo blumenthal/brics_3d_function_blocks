@@ -1,0 +1,30 @@
+{    
+  "id": "fbx-iosmloader-output-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "Output Schema for iosmloader.",
+  "description": "Output data model for a function block to load an (Indoor) Open Street Map data.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-iosmloader-output-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "numberOfNodes": { 
+      "type": "number",
+      "description": "Number of loaded OSM ways."
+    },
+    "numberOfWays": { 
+      "type": "number",
+      "description": "Number of loaded OSM ways."
+    },
+    "numberOfRelations": { 
+      "type": "number",
+      "description": "Number of loaded OSM ways."
+    }
+  },
+  
+  "required": [ "metamodel", "numberOfNodes", "numberOfWays", "numberOfRelations"],
+  "additionalProperties": false
+  
+}

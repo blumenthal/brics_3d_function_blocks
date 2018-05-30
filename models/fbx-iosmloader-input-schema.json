@@ -1,0 +1,30 @@
+{    
+  "id": "fbx-iosmloader-input-schema.json",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title" : "Input Schema for iosmloader.",
+  "description": "Input data model for a function block to load an (Indoor) Open Street Map data.",
+  "type": "object",
+  
+  "properties": {
+    "metamodel": { 
+    	"enum": [ "fbx-iosmloader-input-schema.json"],
+    	"description": "Mandatory metamodel identifier." 
+   	},
+    "subgraphId": { 
+      "$ref": "rsg-id-schema.json",
+      "description": "Optional subgraph ID. This is where the map will be added as a child node. If not specified, the root node will be taken."
+    },
+    "fileName": { 
+      "type": "string",
+      "description": "Mandataory file name for the map to be loaded."
+    },
+    "convertToUtm": { 
+      "type": "boolean",
+      "description": "Optional flag for pose data conversion. If true, every pose will be converted into the UTM representation. Dafault is false."
+    }
+  },
+  
+  "required": [ "metamodel", "fileName"],
+  "additionalProperties": false
+  
+}

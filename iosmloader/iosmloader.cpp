@@ -63,8 +63,8 @@ public:
 
 	IosmLoader(brics_3d::WorldModel* wmHandle) : brics_3d::rsg::IFunctionBlock(wmHandle) {
 		name = "iosmloader";
-		inputMetaModelFile = "fbx-subgraph-and-file-schema.json"; //"fbx-" + name + "-input-schema.json";
-		outputMetaModelFile= "fbx-file-schema.json"; //"fbx-" + name + "-output-schema.json";
+		inputMetaModelFile = "fbx-" + name + "-input-schema.json";
+		outputMetaModelFile= "fbx-" + name + "-output-schema.json";
 
 		Logger::setMinLoglevel(Logger::LOGDEBUG);
 		LOG(INFO) << name << ": Initializing block " << name  << " Build: " << __DATE__ << " " __TIME__;
@@ -76,6 +76,8 @@ public:
 	    char defaultFilename[255] = { FBX_MODELS_DIR };
 	    modelsDefaultPath = defaultFilename;
 	    LOG(DEBUG) << name << ": models default path = " << modelsDefaultPath;
+
+	    parser = 0;
 	};
 
 	bool configure(brics_3d::ParameterSet parameters) {
@@ -106,29 +108,34 @@ public:
 		}
 
 
-		bool result = true;
-		string command = inputModelAsJSON.Get("command").AsString(); // "enum": [ "LOAD_MAP"],
-		string osmFile = inputModelAsJSON.Get("file").AsString();
+		/* Input data */
+		string osmFile = inputModelAsJSON.Get("fileName").AsString();
+		brics_3d::rsg::Id subgraphId = wm->getRootNodeId();
+		bool convertToUtm = false;
 
-//		outputHookId = wm->getRootNodeId(); //TODO
-
-		/* execute query
-		 *
-		 */
-		if (command.compare("LOAD_MAP") == 0) {
-			LOG(INFO) << name << ": LOAD_MAP";
-
-			result = loadFromFile(osmFile, true, wm->getRootNodeId());
-
-
-		} else {
-			result = false;
+		if(inputModelAsJSON.Contains("subgraphId")) { // optional
+			subgraphId = brics_3d::rsg::JSONTypecaster::getIdFromJSON(inputModelAsJSON, "subgraphId");
 		}
+		if(inputModelAsJSON.Contains("convertToUtm")) { // optional
+			convertToUtm = inputModelAsJSON.Get("convertToUtm").AsBool();
+		}
+
+		LOG(DEBUG) << name << ": [Input] fileName = " << osmFile;
+		LOG(DEBUG) << name << ": [Input] subgraphId = " << subgraphId;
+		LOG(DEBUG) << name << ": [Input] convertToUtm = " << convertToUtm;
+
+
+		/* Execute loader */
+		LoaderStatistics statistics;
+		bool result = loadFromFile(osmFile, convertToUtm, wm->getRootNodeId(), statistics);
+		LOG(DEBUG) << name << ": Map loaded.";
 
 
 
 		/* prepare output */
-		outputModelAsJSON.Set("file", osmFile); // jus temporary mirror bach the input file
+		outputModelAsJSON.Set("numberOfNodes", statistics.numberOfNodes);
+		outputModelAsJSON.Set("numberOfWays", statistics.numberOfWays);
+		outputModelAsJSON.Set("numberOnumberOfWaysfNodes", statistics.numberOfRelations);
 
 
 		if(result) {
@@ -183,9 +190,17 @@ private:
 
 	XercesDOMParser* parser;
 
-	bool loadFromFile(string fileName, bool convertToUtm, brics_3d::rsg::Id outputHookId) {
+	struct LoaderStatistics {
+		int numberOfNodes;
+		int numberOfWays;
+		int numberOfRelations;
+	};
 
+	bool loadFromFile(string fileName, bool convertToUtm, brics_3d::rsg::Id outputHookId, LoaderStatistics &statistics) {
 
+		statistics.numberOfNodes = 0;
+		statistics.numberOfWays = 0;
+		statistics.numberOfRelations = 0;
 
 		/* The origin */
 		brics_3d::rsg::Id originId;
